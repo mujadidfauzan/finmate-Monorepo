@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from uuid import UUID
 from app import schemas
-from app.dependencies import get_current_user
+from app.utils.auth import get_current_user
 from app.database import fetch_data, update_data
 
 router = APIRouter(tags=["Profile"])
@@ -26,7 +26,7 @@ async def update_profile(
         raise HTTPException(status_code=400, detail="No updates provided")
 
     updated_user = await update_data("users", str(current_user["id"]), update_fields)
-    return updated_user[0]  # karena return-nya list berisi dict
+    return updated_user[0] 
 
 
 @router.post("/family/join", response_model=schemas.UserOut)
