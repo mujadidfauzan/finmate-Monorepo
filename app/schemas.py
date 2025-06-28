@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field, EmailStr
 
 
 class TransactionCreate(BaseModel):
-    user_id: uuid.UUID
     amount: float
     type: str = Field(..., pattern="^(income|expense)$")
     category: str
