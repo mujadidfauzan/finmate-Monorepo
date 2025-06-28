@@ -3,29 +3,37 @@ from typing import Optional
 
 from app.database import delete_data, fetch_data, insert_data, update_data
 from app.schemas import TransactionCreate, TransactionUpdate
-from fastapi import APIRouter, HTTPException
+from app.utils.auth import get_current_user
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter()
 
 
 # Membuat transaksi baru
 @router.post("/create")
-async def create_transaction(trans: TransactionCreate):
-    result = await insert_data("transactions", trans.dict())
+async def create_transaction(trans: TransactionCreate, user=Depends(get_current_user)):
+    user_id = user["user_id"]
+    data = trans.dict()
+    data["user_id"] = user_id
+
+    result = await insert_data("transactions", data)
+
     if "code" in result:
         raise HTTPException(status_code=400, detail=result)
+
     return {"message": "Transaksi berhasil ditambahkan", "data": result}
 
 
 # Mendapatkan daftar transaksi berdasarkan user_id, tipe, kategori, tanggal, dan jenis transaksi
 @router.get("/")
 async def get_transactions(
-    user_id: str,
     type: Optional[str] = None,
     category: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
+    user=Depends(get_current_user),
 ):
+    user_id = user["user_id"]
     filters = f"&user_id=eq.{user_id}"
 
     if type:
@@ -43,8 +51,10 @@ async def get_transactions(
 
 # Mendapatkan detail transaksi berdasarkan ID transaksi
 @router.get("/{id}")
-async def get_transaction_detail(id: str):
-    filters = f"&id=eq.{id}"
+async def get_transaction_detail(id: str, user=Depends(get_current_user)):
+    user_id = user["user_id"]
+    filters = f"&id=eq.{id}&user_id=eq.{user_id}"  # hanya milik user ini
+
     data = await fetch_data("transactions", filters)
 
     if not data:
@@ -55,7 +65,15 @@ async def get_transaction_detail(id: str):
 
 # Memperbarui transaksi berdasarkan ID transaksi
 @router.put("/{id}")
-async def update_transaction(id: str, trans: TransactionUpdate):
+async def update_transaction(
+    id: str, trans: TransactionUpdate, user=Depends(get_current_user)
+):
+    user_id = user["user_id"]
+
+    existing = await fetch_data("transactions", f"&id=eq.{id}&user_id=eq.{user_id}")
+    if not existing:
+        raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
+
     update_payload = trans.dict(exclude_unset=True)
     if not update_payload:
         raise HTTPException(status_code=400, detail="Tidak ada data yang diberikan")
@@ -64,16 +82,22 @@ async def update_transaction(id: str, trans: TransactionUpdate):
 
     if "code" in result:
         raise HTTPException(status_code=400, detail=result)
-    if not result or (isinstance(result, list) and len(result) == 0):
-        raise HTTPException(
-            status_code=404, detail="Transaksi tidak ditemukan atau tidak diubah"
-        )
 
     return {"message": "Transaksi berhasil diperbarui", "data": result}
 
 
 # Menghapus transaksi berdasarkan ID transaksi
 @router.delete("/{id}")
-async def delete_transaction(id: str):
+async def delete_transaction(id: str, user=Depends(get_current_user)):
+    user_id = user["user_id"]
+
+    existing = await fetch_data("transactions", f"&id=eq.{id}&user_id=eq.{user_id}")
+    if not existing:
+        raise HTTPException(status_code=404, detail="Transaksi tidak ditemukan")
+
     result = await delete_data("transactions", id)
+
+    if not result.get("ok", False):
+        raise HTTPException(status_code=400, detail=result)
+
     return result
