@@ -23,6 +23,10 @@ class TransactionUpdate(BaseModel):
     note: Optional[str]
     transaction_date: Optional[date]
 
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
 class UserOut(BaseModel):
     id: UUID
     name: str
@@ -33,6 +37,15 @@ class UserOut(BaseModel):
     model_config = {
     "from_attributes": True
 }
+class UserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str  
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
 
 
 class UserUpdate(BaseModel):

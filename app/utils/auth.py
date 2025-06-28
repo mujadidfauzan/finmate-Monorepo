@@ -2,10 +2,20 @@ from app.config import SUPABASE_JWT_SECRET
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
+from datetime import datetime, timedelta
 from app.database import fetch_data  # ✅ penting
 from uuid import UUID
 
 security_scheme = HTTPBearer(auto_error=False)
+ALGORITHM = "HS256"
+
+
+def create_access_token(data: dict, expires_delta: timedelta = timedelta(hours=24)):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SUPABASE_JWT_SECRET, algorithm=ALGORITHM)
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
