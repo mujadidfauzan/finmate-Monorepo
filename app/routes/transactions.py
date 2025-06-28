@@ -101,3 +101,20 @@ async def delete_transaction(id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail=result)
 
     return result
+
+
+# Mendapatkan ringkasan transaksi untuk user tertentu
+@router.get("/summary")
+async def get_summary(user=Depends(get_current_user)):
+    user_id = user["user_id"]
+    filters = f"&user_id=eq.{user_id}"
+    data = await fetch_data("transactions", filters)
+
+    total_income = sum(x["amount"] for x in data if x["type"] == "income")
+    total_expense = sum(x["amount"] for x in data if x["type"] == "expense")
+
+    return {
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": total_income - total_expense,
+    }
