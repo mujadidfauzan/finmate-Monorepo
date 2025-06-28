@@ -4,6 +4,7 @@ from datetime import date
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, Field, EmailStr
+from datetime import datetime
 
 
 class TransactionCreate(BaseModel):
@@ -51,3 +52,14 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str]
     email: Optional[EmailStr]
+
+
+class AIQuery(BaseModel):
+    prompt: str
+
+class AIResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    prompt: str
+    response: str
+    created_at: datetime

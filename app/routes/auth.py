@@ -5,7 +5,7 @@ from app.schemas import UserRegister, UserLogin, UserOut
 from app.database import fetch_data, insert_data
 from app.utils.auth import create_access_token
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

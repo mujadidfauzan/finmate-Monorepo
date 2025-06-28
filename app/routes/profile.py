@@ -4,7 +4,7 @@ from app import schemas
 from app.utils.auth import get_current_user
 from app.database import fetch_data, update_data
 
-router = APIRouter(tags=["Profile"])
+router = APIRouter()
 
 @router.get("/profile", response_model=schemas.UserOut)
 async def get_profile(current_user: dict = Depends(get_current_user)):
