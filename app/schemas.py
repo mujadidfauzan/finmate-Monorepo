@@ -2,8 +2,8 @@
 import uuid
 from datetime import date
 from typing import Optional
-
-from pydantic import BaseModel, Field
+from uuid import UUID
+from pydantic import BaseModel, Field, EmailStr
 
 
 class TransactionCreate(BaseModel):
@@ -23,3 +23,19 @@ class TransactionUpdate(BaseModel):
     method: Optional[str] = Field(None, pattern="^(manual|voice|ocr)$")
     note: Optional[str]
     transaction_date: Optional[date]
+
+class UserOut(BaseModel):
+    id: UUID
+    name: str
+    email: EmailStr
+    role: str
+    family_id: Optional[UUID]
+
+    model_config = {
+    "from_attributes": True
+}
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str]
+    email: Optional[EmailStr]
