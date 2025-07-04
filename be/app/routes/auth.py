@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
 
 router = APIRouter()
-router = APIRouter(prefix="/ai", tags=["AI Consultant"])
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
