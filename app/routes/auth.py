@@ -1,13 +1,14 @@
-#app/routes/auth.py
+# app/routes/auth.py
+from app.database import fetch_data, insert_data
+from app.schemas import UserLogin, UserOut, UserRegister
+from app.utils.auth import create_access_token
 from fastapi import APIRouter, HTTPException
 from passlib.context import CryptContext
-from app.schemas import UserRegister, UserLogin, UserOut
-from app.database import fetch_data, insert_data
-from app.utils.auth import create_access_token
 
 router = APIRouter()
-
+router = APIRouter(prefix="/ai", tags=["AI Consultant"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 
 @router.post("/register", response_model=UserOut)
 async def register(user: UserRegister):
@@ -27,6 +28,7 @@ async def register(user: UserRegister):
     inserted = await insert_data("users", data)
     return inserted[0]
 
+
 @router.post("/login")
 async def login(credentials: UserLogin):
     users = await fetch_data("users", f"&email=eq.{credentials.email}")
@@ -37,10 +39,8 @@ async def login(credentials: UserLogin):
     if not pwd_context.verify(credentials.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({
-        "sub": user["id"],
-        "email": user["email"],
-        "role": user["role"]
-    })
+    token = create_access_token(
+        {"sub": user["id"], "email": user["email"], "role": user["role"]}
+    )
 
     return {"access_token": token, "token_type": "bearer"}

@@ -1,10 +1,10 @@
 # app/schemas.py
 import uuid
-from datetime import date
-from typing import Optional
+from datetime import date, datetime
+from typing import List, Optional
 from uuid import UUID
-from pydantic import BaseModel, Field, EmailStr
-from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class TransactionCreate(BaseModel):
@@ -24,9 +24,11 @@ class TransactionUpdate(BaseModel):
     note: Optional[str]
     transaction_date: Optional[date]
 
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
 
 class UserOut(BaseModel):
     id: UUID
@@ -35,14 +37,15 @@ class UserOut(BaseModel):
     role: str
     family_id: Optional[UUID]
 
-    model_config = {
-    "from_attributes": True
-}
+    model_config = {"from_attributes": True}
+
+
 class UserRegister(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: str  
+    role: str
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -54,12 +57,11 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr]
 
 
-class AIQuery(BaseModel):
-    prompt: str
+class Message(BaseModel):
+    role: str  # "user" or "model"
+    content: str
 
-class AIResponse(BaseModel):
-    id: UUID
-    user_id: UUID
-    prompt: str
-    response: str
-    created_at: datetime
+
+class ChatRequest(BaseModel):
+    session_id: UUID
+    message: str
