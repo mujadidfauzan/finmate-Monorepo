@@ -32,21 +32,24 @@ async def get_chat_history(session_id: UUID, user=Depends(get_current_user)):
 @router.post("/chatbot/message")
 async def send_message(req: ChatRequest, user=Depends(get_current_user)):
     session_id = str(req.session_id)
+    user_id = user["id"]  # Ambil user_id untuk konteks
 
+    # Ambil history chat
     messages = await fetch_data(
         "chat_messages", f"&session_id=eq.{session_id}&order=created_at.asc"
     )
     history = [{"role": m["role"], "parts": [m["content"]]} for m in messages]
 
-    history.append({"role": "user", "parts": [req.message]})
+    # Kirim pesan dengan konteks user
+    reply = await ask_gemini_with_history(history, req.message, user_id)
 
-    reply = ask_gemini_with_history(history, req.message)
-
+    # Simpan pesan user
     await insert_data(
         "chat_messages",
         {"session_id": session_id, "role": "user", "content": req.message},
     )
 
+    # Simpan reply AI
     await insert_data(
         "chat_messages", {"session_id": session_id, "role": "model", "content": reply}
     )
@@ -56,7 +59,7 @@ async def send_message(req: ChatRequest, user=Depends(get_current_user)):
 
 @router.delete("/chatbot/session/{session_id}")
 async def delete_chat_session(session_id: UUID, user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]  # Perbaiki dari user["user_id"] ke user["id"]
 
     session_data = await fetch_data(
         "chat_sessions", f"&id=eq.{session_id}&user_id=eq.{user_id}"
