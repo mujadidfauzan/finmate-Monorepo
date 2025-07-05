@@ -13,6 +13,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -73,6 +74,35 @@ const ChatbotScreen = ({ navigation }) => {
         setMessages(prev => [...prev, botResponse]);
       }, 1000);
     }
+  };
+
+  const handleDeleteChat = () => {
+    setShowMenu(false);
+    Alert.alert(
+      "Hapus Percakapan",
+      "Apakah Anda yakin ingin menghapus semua pesan dalam percakapan ini?",
+      [
+        {
+          text: "Batal",
+          style: "cancel"
+        },
+        { 
+          text: "Hapus", 
+          onPress: () => {
+            setMessages([
+              {
+                id: 1,
+                text: 'Selamat Pagi, Mujadid',
+                isBot: true,
+                timestamp: new Date(),
+              }
+            ]);
+          },
+          style: 'destructive' 
+        }
+      ],
+      { cancelable: true }
+    );
   };
 
   const renderMessage = ({ item }) => (
@@ -211,7 +241,7 @@ const ChatbotScreen = ({ navigation }) => {
               <Ionicons name="archive-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Archive</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteChat}>
               <Ionicons name="trash-outline" size={20} color="#FF3B30" />
               <Text style={[styles.menuText, { color: '#FF3B30' }]}>Delete</Text>
             </TouchableOpacity>
