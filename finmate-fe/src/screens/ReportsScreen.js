@@ -10,48 +10,92 @@ import {
   Platform
 } from 'react-native';
 import COLORS from '../styles/colors';
+import { useTransactions } from '../context/TransactionsContext';
+import { formatCurrency } from '../utils/formatters';
 
 const { width } = Dimensions.get('window');
 
 const ReportsScreen = () => {
   const [selectedTab, setSelectedTab] = useState('Pribadi');
+  const { transactions } = useTransactions();
 
-  // Sample data - in real app, this would come from your data source
-  const summaryData = {
-    totalExpense: 770000,
-    totalIncome: 750000,
-    totalSavings: 120000,
-  };
+  // Process transactions to get report data
+  const totalIncome = transactions
+    .filter(t => t.type === 'pemasukan')
+    .reduce((sum, t) => sum + t.amount, 0);
 
-  const dailyExpenses = [
-    { day: 'Sen', amount: 50000 },
-    { day: 'Sel', amount: 75000 },
-    { day: 'Rab', amount: 45000 },
-    { day: 'Kam', amount: 60000 },
-    { day: 'Jum', amount: 80000 },
-    { day: 'Sab', amount: 55000 },
-    { day: 'Min', amount: 40000 },
-  ];
+  const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
+  const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+  
+  const totalSavings = totalIncome - totalExpense;
 
-  const categoryData = [
-    { name: 'Makanan', percentage: 45, color: COLORS.secondary, amount: 450000 },
-    { name: 'Transportasi', percentage: 25, color: COLORS.primary, amount: 250000 },
-    { name: 'Belanja', percentage: 20, color: COLORS.accent, amount: 200000 },
-    { name: 'Hiburan', percentage: 10, color: COLORS.error, amount: 100000 },
-  ];
+  // Daily expenses for the last 7 days
+  const today = new Date();
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    return d;
+  }).reverse();
 
-  const monthlyComparison = [
-    { month: 'Jan', amount: 600000 },
-    { month: 'Feb', amount: 450000 },
-    { month: 'Mar', amount: 750000 },
-    { month: 'Apr', amount: 600000 },
-    { month: 'Mei', amount: 500000 },
-    { month: 'Jun', amount: 700000 },
-  ];
+  const dailyExpenses = last7Days.map(date => {
+    const dayOfWeek = date.toLocaleDateString('id-ID', { weekday: 'short' });
+    const expensesOnDay = expenseTransactions
+      .filter(t => {
+        const tDate = new Date(t.date);
+        return tDate.getFullYear() === date.getFullYear() &&
+               tDate.getMonth() === date.getMonth() &&
+               tDate.getDate() === date.getDate();
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+    return { day: dayOfWeek, amount: expensesOnDay };
+  });
 
-  const formatCurrency = (amount) => {
-    return `Rp${amount.toLocaleString('id-ID')},-`;
-  };
+  // Expenses by category
+  const categoryExpenses = expenseTransactions.reduce((acc, t) => {
+    if (!acc[t.category]) {
+      acc[t.category] = 0;
+    }
+    acc[t.category] += t.amount;
+    return acc;
+  }, {});
+  
+  const categoryColors = [COLORS.secondary, COLORS.primary, COLORS.accent, COLORS.error, '#FFC107', '#607D8B'];
+  const categoryData = Object.keys(categoryExpenses).map((category, index) => {
+    const amount = categoryExpenses[category];
+    const percentage = totalExpense > 0 ? Math.round((amount / totalExpense) * 100) : 0;
+    return {
+      name: category,
+      amount,
+      percentage,
+      color: categoryColors[index % categoryColors.length]
+    };
+  }).sort((a, b) => b.amount - a.amount);
+
+  // Monthly comparison for last 6 months
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const monthlyComparison = [];
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+
+  for (let i = 5; i >= 0; i--) {
+    let month = currentMonth - i;
+    let year = currentYear;
+    if (month < 0) {
+      month += 12;
+      year -= 1;
+    }
+    
+    const monthName = monthNames[month];
+    
+    const expensesInMonth = expenseTransactions
+      .filter(t => {
+        const tDate = new Date(t.date);
+        return tDate.getMonth() === month && tDate.getFullYear() === year;
+      })
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    monthlyComparison.push({ month: monthName, amount: expensesInMonth });
+  }
 
   const SummaryCard = ({ title, amount, color }) => (
     <View style={[styles.summaryCard, { borderLeftColor: color }]}>
@@ -161,17 +205,17 @@ const ReportsScreen = () => {
         <View style={styles.summaryContainer}>
           <SummaryCard
             title="Total Pengeluaran"
-            amount={summaryData.totalExpense}
+            amount={totalExpense}
             color={COLORS.error}
           />
           <SummaryCard
             title="Total Pemasukan"
-            amount={summaryData.totalIncome}
+            amount={totalIncome}
             color={COLORS.success}
           />
           <SummaryCard
             title="Total Tabungan"
-            amount={summaryData.totalSavings}
+            amount={totalSavings}
             color={COLORS.primary}
           />
         </View>
