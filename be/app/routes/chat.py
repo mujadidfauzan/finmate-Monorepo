@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("/chatbot/session")
 async def get_or_create_session(user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]
     sessions = await fetch_data("chat_sessions", f"&user_id=eq.{user_id}")
     if sessions:
         return {"session_id": sessions[0]["id"]}
