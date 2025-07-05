@@ -1,17 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Image,
-
-} from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
@@ -43,42 +31,23 @@ export default function LoginScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-      <KeyboardAvoidingView 
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
-
+      <KeyboardAvoidingView style={styles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           {/* Logo and Header */}
           <View style={styles.header}>
-            <Image
-              source={require('../../assets/finemate logo 1.png')}
-              style={styles.logo}
-            />
+            <Image source={require('../../assets/finemate logo 1.png')} style={styles.logo} />
             <Text style={styles.welcomeTitle}>Selamat Datang!</Text>
             <Text style={styles.welcomeSubtitle}>Masuk untuk mengakses akun anda</Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
-            
             {/* Email Field */}
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="mail-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="example@gmail.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+                <TextInput style={styles.textInput} placeholder="example@gmail.com" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoCorrect={false} />
               </View>
             </View>
 
@@ -87,23 +56,9 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.inputLabel}>Password</Text>
               <View style={styles.inputWrapper}>
                 <Ionicons name="lock-closed-outline" size={20} color="#8E8E93" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="••••••••••"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons 
-                    name={showPassword ? 'eye-outline' : 'eye-off-outline'} 
-                    size={20} 
-                    color="#8E8E93" 
-                  />
+                <TextInput style={styles.textInput} placeholder="••••••••••" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} autoCapitalize="none" />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  <Ionicons name={showPassword ? 'eye-outline' : 'eye-off-outline'} size={20} color="#8E8E93" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -130,7 +85,6 @@ export default function LoginScreen({ navigation }) {
               <Ionicons name="logo-google" size={20} color="#000" style={styles.googleIcon} />
               <Text style={styles.googleButtonText}>Lanjutkan dengan Google</Text>
             </TouchableOpacity>
-
           </View>
 
           {/* Register Link */}
@@ -140,7 +94,6 @@ export default function LoginScreen({ navigation }) {
               <Text style={styles.registerLink}>Daftar Sekarang</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -170,7 +123,7 @@ const styles = StyleSheet.create({
     height: 160,
     resizeMode: 'contain',
     marginBottom: 20,
-     marginLeft: 20
+    marginLeft: 20,
   },
   welcomeTitle: {
     fontSize: 28,
@@ -286,4 +239,4 @@ const styles = StyleSheet.create({
     color: '#2ABF83',
     fontWeight: '600',
   },
-}); 
+});

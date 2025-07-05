@@ -2,8 +2,9 @@ import json
 import os
 
 import google.generativeai as genai
+from app.config import GEMINI_API_KEY
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key=os.getenv(GEMINI_API_KEY))
 MODEL_NAME = "gemini-1.5-flash"
 
 
@@ -32,7 +33,7 @@ def ask_gemini(prompt: str) -> str:
 
 def parse_transaction_with_gemini(text: str):
     prompt = f"""
-Kamu adalah sistem keuangan pintar. Dari kalimat berikut ini, ekstrak dan kembalikan sebagai JSON:
+Kamu adalah sistem keuangan pintar. Dari kalimat berikut ini, ekstrak dalam format output yang akan ditentukan::
 - jenis transaksi: income / expense
 - kategori: (contoh: makan, transportasi, gaji)
 - jumlah uang (tanpa simbol): float
@@ -46,10 +47,13 @@ Contoh output:
   "note": "makan siang ayam geprek"
 }}
 
+Ikutilah format OUTPUTnya dalam text biasa bukan json!!!!
+
 Kalimat: {text}
 """
 
     result = ask_gemini(prompt)
+    print(f"Output Gemini: {result}")
     try:
         return json.loads(result)
     except:

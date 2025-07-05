@@ -18,26 +18,21 @@ async def transcribe_voice(
         raise HTTPException(
             status_code=400, detail="File harus berupa audio (mp3, wav)"
         )
-
-    user_id = user["user_id"]
+    user_id = user["id"]
 
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp:
             tmp.write(await file.read())
             tmp_path = tmp.name
 
-        # 1. Transkripsi dengan Whisper
         text = transcribe_audio(tmp_path)
-
-        # 2. Parsing ke Gemini
+        print(f"Transkripsi suara: {text}")
         parsed = parse_transaction_with_gemini(text)
-
-        # Validasi hasil Gemini
+        print(f"Parsed JSON: {parsed}")
         amount = float(parsed.get("amount", 0))
         if amount <= 0:
             raise ValueError("Jumlah tidak valid")
 
-        # 3. Simpan sebagai transaksi
         trans = {
             "user_id": user_id,
             "amount": amount,
