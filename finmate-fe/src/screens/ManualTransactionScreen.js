@@ -13,40 +13,17 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTransactions } from '../context/TransactionsContext';
+import { expenseCategories, incomeCategories } from '../data/categories';
 
 const { width, height } = Dimensions.get('window');
-
-const expenseCategories = [
-  { id: 1, name: 'Makan', icon: 'restaurant', type: 'MaterialIcons' },
-  { id: 2, name: 'Transportasi', icon: 'directions-car', type: 'MaterialIcons' },
-  { id: 3, name: 'Sosial', icon: 'people', type: 'MaterialIcons' },
-  { id: 4, name: 'Langganan', icon: 'subscriptions', type: 'MaterialIcons' },
-  { id: 5, name: 'Skincare', icon: 'face-retouching-natural', type: 'MaterialCommunityIcons' },
-  { id: 6, name: 'Make Up', icon: 'lipstick', type: 'MaterialCommunityIcons' },
-  { id: 7, name: 'Tempat Tinggal', icon: 'home', type: 'MaterialIcons' },
-  { id: 8, name: 'Pakaian', icon: 'checkroom', type: 'MaterialIcons' },
-  { id: 9, name: 'Pendidikan', icon: 'school', type: 'MaterialIcons' },
-  { id: 10, name: 'Rumah Tangga', icon: 'home-repair-service', type: 'MaterialIcons' },
-  { id: 11, name: 'Listrik', icon: 'flash-on', type: 'MaterialIcons' },
-  { id: 12, name: 'Air', icon: 'water-drop', type: 'MaterialIcons' },
-  { id: 13, name: 'Kucing', icon: 'pets', type: 'MaterialIcons' },
-  { id: 14, name: 'Buah', icon: 'apple', type: 'MaterialCommunityIcons' },
-  { id: 15, name: 'Parkir', icon: 'local-parking', type: 'MaterialIcons' },
-  { id: 16, name: 'Olahraga', icon: 'sports-soccer', type: 'MaterialIcons' },
-];
-
-const incomeCategories = [
-  { id: 1, name: 'Gaji', icon: 'attach-money', type: 'MaterialIcons' },
-  { id: 2, name: 'Tunjangan', icon: 'card-giftcard', type: 'MaterialIcons' },
-  { id: 3, name: 'Hadiah', icon: 'gift', type: 'FontAwesome' },
-  { id: 4, name: 'Investasi', icon: 'trending-up', type: 'MaterialIcons' },
-];
 
 const ManualTransactionScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('Pengeluaran');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const { addTransaction } = useTransactions();
 
   const currentCategories = activeTab === 'Pengeluaran' ? expenseCategories : incomeCategories;
 
@@ -78,20 +55,21 @@ const ManualTransactionScreen = ({ navigation }) => {
     }
 
     const transactionData = {
-      category: selectedCategory,
+      category: selectedCategory.name,
       amount: parseInt(amount),
       notes: notes,
       date: new Date().toISOString(),
       type: activeTab.toLowerCase(),
     };
 
-    console.log('Transaction Data:', transactionData);
+    addTransaction(transactionData);
     Alert.alert('Berhasil', `${activeTab} berhasil ditambahkan!`);
     
     // Reset form
     setSelectedCategory(null);
     setAmount('');
     setNotes('');
+    navigation.goBack();
   };
 
   const formatAmount = (value) => {

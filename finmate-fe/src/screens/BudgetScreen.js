@@ -11,39 +11,63 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import COLORS from '../styles/colors';
+import { useTransactions } from '../context/TransactionsContext';
+import { useSavings } from '../context/SavingsContext';
+import { useBudget } from '../context/BudgetContext';
+import { formatCurrency } from '../utils/formatters';
 
 const { width } = Dimensions.get('window');
 
 const BudgetScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('anggaran');
+  const { transactions } = useTransactions();
+  const { savingsPlans } = useSavings();
+  const { budgetCategories } = useBudget();
 
-  // Sample data for Anggaran (Budget)
+  // --- Dynamic Budget Data Calculation ---
+  const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
+  const savingsTransactions = transactions.filter(t => t.type === 'tabungan');
+
+  const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.total, 0);
+  const totalUsed = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+  // Calculate details for each budgeted category
+  const updatedCategories = budgetCategories.map(category => {
+    const usedForCategory = expenseTransactions
+      .filter(t => t.category.toLowerCase() === category.name.toLowerCase())
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const remaining = category.total - usedForCategory;
+    const percentage = category.total > 0 ? Math.min(Math.round((usedForCategory / category.total) * 100), 100) : 0;
+
+    return { ...category, used: usedForCategory, remaining, percentage };
+  });
+
   const budgetData = {
-    totalBudget: 2000000,
-    used: 1500000,
-    remaining: 500000,
-    percentage: 75,
-    categories: [
-      { name: 'Makanan', total: 500000, used: 350000, remaining: 150000, percentage: 70, color: '#34C759' },
-      { name: 'Bensin', total: 300000, used: 250000, remaining: 50000, percentage: 83, color: '#34C759' },
-      { name: 'Listrik', total: 200000, used: 180000, remaining: 20000, percentage: 90, color: '#FF9500' },
-      { name: 'Kucing', total: 150000, used: 100000, remaining: 50000, percentage: 67, color: '#34C759' },
-    ]
+    totalBudget: totalBudget,
+    used: totalUsed,
+    remaining: totalBudget - totalUsed,
+    percentage: totalBudget > 0 ? Math.min(Math.round((totalUsed / totalBudget) * 100), 100) : 0,
+    categories: updatedCategories,
   };
+  // --- End of Dynamic Data Calculation ---
 
-  // Sample data for Tabungan (Savings)
+  // --- DYNAMIC SAVINGS DATA ---
+  const totalSavingsTarget = savingsPlans.reduce((sum, plan) => sum + plan.target, 0);
+  const totalSavingsCollected = savingsPlans.reduce((sum, plan) => sum + plan.collected, 0);
+
+  const totalIncome = transactions
+    .filter(t => t.type === 'pemasukan')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const surplus = totalIncome - totalUsed - savingsTransactions.reduce((sum, t) => sum + t.amount, 0);
+
   const savingsData = {
-    target: 5000000,
-    collected: 2500000,
-    remaining: 2500000,
-    percentage: 50,
-    plans: [
-      { name: 'Tabungan Nikah', target: 5000000, collected: 2500000, icon: 'gift' }
-    ]
-  };
-
-  const formatCurrency = (amount) => {
-    return `Rp${amount.toLocaleString('id-ID')}`;
+    target: totalSavingsTarget,
+    collected: totalSavingsCollected,
+    remaining: totalSavingsTarget - totalSavingsCollected,
+    percentage: totalSavingsTarget > 0 ? Math.min(Math.round((totalSavingsCollected / totalSavingsTarget) * 100), 100) : 0,
+    plans: savingsPlans
   };
 
   const renderProgressCircle = (percentage, size = 80, strokeWidth = 8) => {
@@ -86,7 +110,7 @@ const BudgetScreen = ({ navigation }) => {
       <View style={styles.categoriesSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rincian Anggaran</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddBudgetCategory')}>
             <Ionicons name="add" size={24} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
@@ -95,7 +119,7 @@ const BudgetScreen = ({ navigation }) => {
           <View key={index} style={styles.categoryCard}>
             <View style={styles.categoryHeader}>
               <Text style={styles.categoryName}>{category.name}</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('EditBudgetCategory', { category })}>
                 <Ionicons name="create-outline" size={20} color={COLORS.gray} />
               </TouchableOpacity>
             </View>
@@ -149,10 +173,18 @@ const BudgetScreen = ({ navigation }) => {
       <View style={styles.categoriesSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rencana Tabungan</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddSavingsPlan')}>
             <Ionicons name="add" size={24} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity 
+          style={styles.allocateButton} 
+          onPress={() => navigation.navigate('AllocateSavings', { surplus: Math.max(0, surplus) })}
+        >
+          <Text style={styles.allocateButtonText}>Alokasikan Dana</Text>
+          <Text style={styles.allocateButtonAmount}>{formatCurrency(Math.max(0, surplus))}</Text>
+        </TouchableOpacity>
 
         {savingsData.plans.map((plan, index) => (
           <View key={index} style={styles.savingsCard}>
@@ -165,7 +197,7 @@ const BudgetScreen = ({ navigation }) => {
               </View>
               <View style={styles.savingsProgress}>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${savingsData.percentage}%` }]} />
+                  <View style={[styles.progressFill, { width: `${plan.target > 0 ? (plan.collected / plan.target) * 100 : 0}%` }]} />
                 </View>
                 <View style={styles.savingsAmounts}>
                   <Text style={styles.savingsAmount}>{formatCurrency(plan.collected)}</Text>
@@ -403,6 +435,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
   },
+  allocateButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  allocateButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  allocateButtonAmount: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '500',
+  }
 });
 
 export default BudgetScreen; 

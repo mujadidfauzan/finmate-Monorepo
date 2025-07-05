@@ -9,8 +9,39 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
+import { useTransactions } from '../context/TransactionsContext';
+import { formatCurrency, formatDate } from '../utils/formatters';
 
 export default function HomeScreen({ navigation }) {
+  const { transactions } = useTransactions();
+
+  const totalIncome = transactions
+    .filter(t => t.type === 'pemasukan')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalExpense = transactions
+    .filter(t => t.type === 'pengeluaran')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalSavings = transactions
+    .filter(t => t.type === 'tabungan')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const netAsset = totalIncome - totalExpense;
+  const availableBalance = netAsset - totalSavings;
+
+  const transactionsByDate = transactions.reduce((acc, t) => {
+    const d = new Date(t.date);
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
+    }
+    acc[dateKey].push(t);
+    return acc;
+  }, {});
+
+  const sortedDates = Object.keys(transactionsByDate).sort((a, b) => b.localeCompare(a));
   
   return (
     <SafeAreaView style={styles.container}>
@@ -37,19 +68,15 @@ export default function HomeScreen({ navigation }) {
         {/* Aset Bersih Card */}
         <View style={styles.assetCard}>
           <Text style={styles.assetLabel}>Aset Bersih</Text>
-          <Text style={styles.assetAmount}>Rp690.000</Text>
+          <Text style={styles.assetAmount}>{formatCurrency(netAsset)}</Text>
           <View style={styles.assetBreakdown}>
             <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>Saldo</Text>
-              <Text style={styles.breakdownValue}>Rp700.000</Text>
+              <Text style={styles.breakdownLabel}>Saldo Tersedia</Text>
+              <Text style={styles.breakdownValue}>{formatCurrency(availableBalance)}</Text>
             </View>
             <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>Tabungan</Text>
-              <Text style={styles.breakdownValue}>Rp10.000</Text>
-            </View>
-            <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>Tabungan</Text>
-              <Text style={styles.breakdownValue}>Rp600.000.000</Text>
+              <Text style={styles.breakdownLabel}>Total Tabungan</Text>
+              <Text style={styles.breakdownValue}>{formatCurrency(totalSavings)}</Text>
             </View>
           </View>
         </View>
@@ -60,101 +87,58 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.recapContainer}>
             <View style={styles.recapItem}>
               <Text style={styles.recapLabel}>Pengeluaran</Text>
-              <Text style={styles.recapAmount}>Rp500.000</Text>
+              <Text style={styles.recapAmount}>{formatCurrency(totalExpense)}</Text>
             </View>
             <View style={styles.recapItem}>
               <Text style={styles.recapLabel}>Pemasukan</Text>
-              <Text style={styles.recapAmount}>Rp600.000</Text>
+              <Text style={styles.recapAmount}>{formatCurrency(totalIncome)}</Text>
             </View>
           </View>
+        </View>
+        
+        {sortedDates.map(date => {
+          const [year, month, day] = date.split('-').map(Number);
+          const displayDate = new Date(year, month - 1, day);
           
-          {/* Progress Circle */}
-          <View style={styles.progressContainer}>
-            <View style={styles.progressCircle}>
-              <View style={styles.progressInner}>
-                <Text style={styles.progressPercent}>80%</Text>
-              </View>
-            </View>
-            <View style={styles.progressDetails}>
-              <View style={styles.progressDetailItem}>
-                <Text style={styles.progressLabel}>Anggaran</Text>
-                <Text style={styles.progressValue}>Rp2.000.000</Text>
-              </View>
-              <View style={styles.progressDetailItem}>
-                <Text style={styles.progressLabel}>Sisa</Text>
-                <Text style={styles.progressValue}>Rp700.000</Text>
-              </View>
-              <View style={styles.progressDetailItem}>
-                <Text style={styles.progressLabel}>Rata-rata harian</Text>
-                <Text style={styles.progressValue}>Rp25.000</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+          return (
+            <View key={date} style={styles.tomorrowSection}>
+              <Text style={styles.tomorrowTitle}>{formatDate(displayDate, 'long')}</Text>
+              {transactionsByDate[date].map(item => {
+                let iconName = 'cart-outline';
+                let iconColor = '#E53935'; // Red for expense
+                let amountColor = '#E53935';
+                let iconBgColor = '#FFEBEE';
 
-        {/* Rekening Tabungan */}
-        <View style={styles.accountSection}>
-          <Text style={styles.sectionTitle}>Rekening Tabungan</Text>
-          
-          <View style={styles.accountItem}>
-            <View style={styles.accountIcon}>
-              <Ionicons name="card-outline" size={24} color="#007AFF" />
+                if (item.type === 'pemasukan') {
+                  iconName = 'arrow-down-circle-outline';
+                  iconColor = '#43A047'; // Green for income
+                  amountColor = '#43A047';
+                  iconBgColor = '#E8F5E9';
+                } else if (item.type === 'tabungan') {
+                  iconName = 'wallet-outline';
+                  iconColor = '#1E88E5'; // Blue for savings
+                  amountColor = '#1E88E5';
+                  iconBgColor = '#E3F2FD';
+                }
+                
+                return (
+                  <View key={item.id} style={styles.transactionItem}>
+                    <View style={[styles.transactionIcon, { backgroundColor: iconBgColor }]}>
+                      <Ionicons name={iconName} size={20} color={iconColor} />
+                    </View>
+                    <View style={styles.transactionDetails}>
+                      <Text style={styles.transactionTitle}>{item.category}</Text>
+                      {item.notes ? <Text style={styles.transactionNotes}>{item.notes}</Text> : null}
+                    </View>
+                    <Text style={[styles.transactionAmount, { color: amountColor }]}>
+                      {formatCurrency(item.amount)}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
-            <View style={styles.accountDetails}>
-              <Text style={styles.accountName}>Mandiri</Text>
-            </View>
-            <Text style={styles.accountBalance}>Rp500.000</Text>
-          </View>
-
-          <View style={styles.accountItem}>
-            <View style={styles.accountIcon}>
-              <Ionicons name="card-outline" size={24} color="#007AFF" />
-            </View>
-            <View style={styles.accountDetails}>
-              <Text style={styles.accountName}>BCA</Text>
-            </View>
-            <Text style={styles.accountBalance}>Rp200.000</Text>
-          </View>
-        </View>
-
-        {/* Date Section */}
-        <View style={styles.dateSection}>
-          <Text style={styles.dateText}>Hari ini 15 Jun 2025</Text>
-        </View>
-
-        {/* Notes Section */}
-        <View style={styles.notesSection}>
-          <Text style={styles.notesTitle}>Tidak ada catatan untuk hari ini</Text>
-          <TouchableOpacity style={styles.addNoteButton}>
-            <Ionicons name="add" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Tomorrow Section */}
-        <View style={styles.tomorrowSection}>
-          <Text style={styles.tomorrowTitle}>Kemarin, 14 Juni 2025</Text>
-          
-          <View style={styles.transactionItem}>
-            <View style={styles.transactionIcon}>
-              <Ionicons name="restaurant-outline" size={20} color="#FF9500" />
-            </View>
-            <View style={styles.transactionDetails}>
-              <Text style={styles.transactionTitle}>Nasi Padang</Text>
-            </View>
-            <Text style={styles.transactionAmount}>Rp20.000</Text>
-          </View>
-
-          <View style={styles.transactionItem}>
-            <View style={styles.transactionIcon}>
-              <Ionicons name="restaurant-outline" size={20} color="#FF9500" />
-            </View>
-            <View style={styles.transactionDetails}>
-              <Text style={styles.transactionTitle}>Nasi Padang</Text>
-            </View>
-            <Text style={styles.transactionAmount}>Rp20.000</Text>
-          </View>
-        </View>
-
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -227,7 +211,7 @@ const styles = StyleSheet.create({
   },
   assetBreakdown: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
   },
   breakdownItem: {
     alignItems: 'center',
@@ -412,6 +396,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#000000',
+  },
+  transactionNotes: {
+    fontSize: 12,
+    color: '#8E8E93',
   },
   transactionAmount: {
     fontSize: 14,

@@ -13,6 +13,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -20,24 +21,31 @@ import { StatusBar } from 'expo-status-bar';
 const { width, height } = Dimensions.get('window');
 
 const ChatbotScreen = ({ navigation }) => {
-  const [messages, setMessages] = useState([
+  const [allChats, setAllChats] = useState([
     {
-      id: 1,
-      text: 'Selamat Pagi, Mujadid',
-      isBot: true,
+      id: `chat_${Date.now()}`,
+      title: `Percakapan Awal`,
+      subtitle: 'Selamat Pagi, Mujadid',
       timestamp: new Date(),
-    }
+      messages: [
+        {
+          id: 1,
+          text: 'Selamat Pagi, Mujadid',
+          isBot: true,
+          timestamp: new Date(),
+        },
+      ],
+    },
   ]);
+
+  const [activeChatId, setActiveChatId] = useState(allChats[0].id);
   const [inputText, setInputText] = useState('');
   const [showSidebar, setShowSidebar] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-width * 0.8)).current;
   const scrollViewRef = useRef();
 
-  const chatHistory = [
-    { id: 1, title: 'Hari Ini', subtitle: 'budang limit', time: '10:30' },
-    { id: 2, title: 'Kemarin', subtitle: 'Putang Usaha', time: '14:20' },
-  ];
+  const activeChat = allChats.find(chat => chat.id === activeChatId);
 
   const toggleSidebar = () => {
     const toValue = showSidebar ? -width * 0.8 : 0;
@@ -51,28 +59,100 @@ const ChatbotScreen = ({ navigation }) => {
   };
 
   const sendMessage = () => {
-    if (inputText.trim()) {
+    if (inputText.trim() && activeChatId) {
       const newMessage = {
-        id: messages.length + 1,
+        id: Date.now(),
         text: inputText,
         isBot: false,
         timestamp: new Date(),
       };
       
-      setMessages(prev => [...prev, newMessage]);
-      setInputText('');
+      const botResponse = {
+        id: Date.now() + 1,
+        text: 'Hai FinMate, ini adalah respons otomatis.',
+        isBot: true,
+        timestamp: new Date(),
+      };
       
-      // Simulate bot response
-      setTimeout(() => {
-        const botResponse = {
-          id: messages.length + 2,
-          text: 'Hai FinMate',
+      const updatedChats = allChats.map(chat => {
+        if (chat.id === activeChatId) {
+          return {
+            ...chat,
+            messages: [...chat.messages, newMessage, botResponse],
+            subtitle: inputText,
+            timestamp: new Date(),
+          };
+        }
+        return chat;
+      });
+
+      setAllChats(updatedChats.sort((a, b) => b.timestamp - a.timestamp));
+      setInputText('');
+    }
+  };
+
+  const handleNewChat = () => {
+    const newChatId = `chat_${Date.now()}`;
+    const newChat = {
+      id: newChatId,
+      title: `Percakapan Baru`,
+      subtitle: 'Mulai percakapan...',
+      timestamp: new Date(),
+      messages: [
+        {
+          id: 1,
+          text: 'Halo! Ada yang bisa saya bantu dengan keuangan Anda hari ini?',
           isBot: true,
           timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, botResponse]);
-      }, 1000);
+        },
+      ],
+    };
+    setAllChats(prev => [newChat, ...prev].sort((a,b) => b.timestamp - a.timestamp));
+    setActiveChatId(newChatId);
+    toggleSidebar();
+  };
+
+  const handleSelectChat = (chatId) => {
+    setActiveChatId(chatId);
+    toggleSidebar();
+  };
+
+  const handleDeleteChat = () => {
+    setShowMenu(false);
+    // Prevent deleting the very last chat session
+    if (allChats.length <= 1) {
+      Alert.alert(
+        "Tidak dapat menghapus",
+        "Anda tidak dapat menghapus satu-satunya percakapan yang tersisa."
+      );
+      return;
     }
+
+    Alert.alert(
+      "Hapus Riwayat Percakapan",
+      "Tindakan ini akan menghapus percakapan ini secara permanen. Anda tidak dapat mengurungkannya.",
+      [
+        {
+          text: "Batal",
+          style: "cancel"
+        },
+        { 
+          text: "Hapus", 
+          onPress: () => {
+            const remainingChats = allChats.filter(chat => chat.id !== activeChatId);
+            
+            setAllChats(remainingChats);
+
+            // Set active chat to the most recent one after deletion
+            if (remainingChats.length > 0) {
+              setActiveChatId(remainingChats[0].id);
+            }
+          },
+          style: 'destructive' 
+        }
+      ],
+      { cancelable: true }
+    );
   };
 
   const renderMessage = ({ item }) => (
@@ -90,12 +170,12 @@ const ChatbotScreen = ({ navigation }) => {
   );
 
   const renderHistoryItem = ({ item }) => (
-    <TouchableOpacity style={styles.historyItem}>
+    <TouchableOpacity style={styles.historyItem} onPress={() => handleSelectChat(item.id)}>
       <View style={styles.historyContent}>
-        <Text style={styles.historyTitle}>{item.title}</Text>
-        <Text style={styles.historySubtitle}>{item.subtitle}</Text>
+        <Text style={styles.historyTitle} numberOfLines={1}>{item.title}</Text>
+        <Text style={styles.historySubtitle} numberOfLines={1}>{item.subtitle}</Text>
       </View>
-      <Text style={styles.historyTime}>{item.time}</Text>
+      <Text style={styles.historyTime}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
     </TouchableOpacity>
   );
 
@@ -125,7 +205,7 @@ const ChatbotScreen = ({ navigation }) => {
         {/* Chat Area */}
         <FlatList
           ref={scrollViewRef}
-          data={messages}
+          data={activeChat?.messages || []}
           renderItem={renderMessage}
           keyExtractor={item => item.id.toString()}
           style={styles.chatArea}
@@ -170,7 +250,7 @@ const ChatbotScreen = ({ navigation }) => {
           <TouchableOpacity>
             <Ionicons name="search" size={24} color="#333" />
           </TouchableOpacity>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={handleNewChat}>
             <Ionicons name="create-outline" size={24} color="#333" />
           </TouchableOpacity>
         </View>
@@ -178,7 +258,7 @@ const ChatbotScreen = ({ navigation }) => {
         <Text style={styles.sidebarTitle}>History chatbot</Text>
         
         <FlatList
-          data={chatHistory}
+          data={allChats}
           renderItem={renderHistoryItem}
           keyExtractor={item => item.id.toString()}
           style={styles.historyList}
@@ -211,7 +291,7 @@ const ChatbotScreen = ({ navigation }) => {
               <Ionicons name="archive-outline" size={20} color="#333" />
               <Text style={styles.menuText}>Archive</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={handleDeleteChat}>
               <Ionicons name="trash-outline" size={20} color="#FF3B30" />
               <Text style={[styles.menuText, { color: '#FF3B30' }]}>Delete</Text>
             </TouchableOpacity>
@@ -226,6 +306,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    paddingBottom: 80,
   },
   header: {
     flexDirection: 'row',
