@@ -11,27 +11,56 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import COLORS from '../styles/colors';
+import { useTransactions } from '../context/TransactionsContext';
+import { formatCurrency } from '../utils/formatters';
 
 const { width } = Dimensions.get('window');
 
 const BudgetScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('anggaran');
+  const { transactions } = useTransactions();
 
-  // Sample data for Anggaran (Budget)
-  const budgetData = {
-    totalBudget: 2000000,
-    used: 1500000,
-    remaining: 500000,
-    percentage: 75,
+  // --- Dynamic Budget Data Calculation ---
+  const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
+
+  // Base budget structure (in a real app, this would be user-configurable)
+  const budgetTemplate = {
+    totalBudget: 3000000,
     categories: [
-      { name: 'Makanan', total: 500000, used: 350000, remaining: 150000, percentage: 70, color: '#34C759' },
-      { name: 'Bensin', total: 300000, used: 250000, remaining: 50000, percentage: 83, color: '#34C759' },
-      { name: 'Listrik', total: 200000, used: 180000, remaining: 20000, percentage: 90, color: '#FF9500' },
-      { name: 'Kucing', total: 150000, used: 100000, remaining: 50000, percentage: 67, color: '#34C759' },
+      { name: 'Makan', total: 800000, color: '#34C759' },
+      { name: 'Transportasi', total: 500000, color: '#007AFF' },
+      { name: 'Listrik', total: 300000, color: '#FF9500' },
+      { name: 'Kucing', total: 200000, color: '#AF52DE' },
+      { name: 'Langganan', total: 200000, color: '#5856D6' },
+      { name: 'Pendidikan', total: 500000, color: '#FF3B30' },
     ]
   };
 
-  // Sample data for Tabungan (Savings)
+  // Calculate total used amount from all expense transactions
+  const totalUsed = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+  // Calculate details for each budgeted category
+  const updatedCategories = budgetTemplate.categories.map(category => {
+    const usedForCategory = expenseTransactions
+      .filter(t => t.category.toLowerCase() === category.name.toLowerCase())
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const remaining = category.total - usedForCategory;
+    const percentage = category.total > 0 ? Math.min(Math.round((usedForCategory / category.total) * 100), 100) : 0;
+
+    return { ...category, used: usedForCategory, remaining, percentage };
+  });
+
+  const budgetData = {
+    totalBudget: budgetTemplate.totalBudget,
+    used: totalUsed,
+    remaining: budgetTemplate.totalBudget - totalUsed,
+    percentage: budgetTemplate.totalBudget > 0 ? Math.min(Math.round((totalUsed / budgetTemplate.totalBudget) * 100), 100) : 0,
+    categories: updatedCategories,
+  };
+  // --- End of Dynamic Data Calculation ---
+
+  // Sample data for Tabungan (Savings) - stays as dummy data for now
   const savingsData = {
     target: 5000000,
     collected: 2500000,
@@ -40,10 +69,6 @@ const BudgetScreen = ({ navigation }) => {
     plans: [
       { name: 'Tabungan Nikah', target: 5000000, collected: 2500000, icon: 'gift' }
     ]
-  };
-
-  const formatCurrency = (amount) => {
-    return `Rp${amount.toLocaleString('id-ID')}`;
   };
 
   const renderProgressCircle = (percentage, size = 80, strokeWidth = 8) => {
