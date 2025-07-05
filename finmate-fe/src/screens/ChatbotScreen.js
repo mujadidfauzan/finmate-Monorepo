@@ -119,9 +119,18 @@ const ChatbotScreen = ({ navigation }) => {
 
   const handleDeleteChat = () => {
     setShowMenu(false);
+    // Prevent deleting the very last chat session
+    if (allChats.length <= 1) {
+      Alert.alert(
+        "Tidak dapat menghapus",
+        "Anda tidak dapat menghapus satu-satunya percakapan yang tersisa."
+      );
+      return;
+    }
+
     Alert.alert(
-      "Hapus Percakapan",
-      "Apakah Anda yakin ingin menghapus semua pesan dalam percakapan ini?",
+      "Hapus Riwayat Percakapan",
+      "Tindakan ini akan menghapus percakapan ini secara permanen. Anda tidak dapat mengurungkannya.",
       [
         {
           text: "Batal",
@@ -130,24 +139,14 @@ const ChatbotScreen = ({ navigation }) => {
         { 
           text: "Hapus", 
           onPress: () => {
-            const updatedChats = allChats.map(chat => {
-              if (chat.id === activeChatId) {
-                return {
-                  ...chat,
-                  messages: [
-                    {
-                      id: 1,
-                      text: 'Selamat Pagi, Mujadid',
-                      isBot: true,
-                      timestamp: new Date(),
-                    }
-                  ],
-                  subtitle: 'Percakapan dihapus',
-                };
-              }
-              return chat;
-            });
-            setAllChats(updatedChats);
+            const remainingChats = allChats.filter(chat => chat.id !== activeChatId);
+            
+            setAllChats(remainingChats);
+
+            // Set active chat to the most recent one after deletion
+            if (remainingChats.length > 0) {
+              setActiveChatId(remainingChats[0].id);
+            }
           },
           style: 'destructive' 
         }
