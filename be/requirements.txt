@@ -4,7 +4,6 @@ aiosignal==1.4.0
 annotated-types==0.7.0
 anyio==4.9.0
 appdirs==1.4.4
-apturl==0.5.2
 argcomplete==1.8.1
 asttokens==3.0.0
 async-timeout==5.0.1
@@ -255,17 +254,17 @@ tiktoken==0.9.0
 timm==0.5.4
 tokenizers==0.13.3
 toml==0.10.2
-torch==2.7.1
-torchmetrics==1.7.3
-torchvision==0.22.1
+torch==2.5.0
+torchaudio==2.5.0
+torchvision==0.18.0
 tornado==6.4.2
-tqdm==4.67.1
+tqdm==4.66.4
 traitlets==5.14.3
-transformers==4.25.1
+transformers==4.23.1
 triton==3.3.1
 typing-inspection==0.4.1
-typing_extensions==4.14.0
-tzdata==2025.1
+typing_extensions==4.15.1
+tzdata==2024.1
 tzlocal==5.2
 ubuntu-drivers-common==0.0.0
 ubuntu-pro-client==8001
@@ -275,7 +274,7 @@ unattended-upgrades==0.1
 unicodedata2==14.0.0
 UNKNOWN @ git+https://github.com/openai/whisper.git@c0d2f624c09dc18e709e37c2ad90c039a4eb72a2
 uritemplate==4.2.0
-urllib3==1.26.5
+urllib3==2.3.2
 usb-creator==0.3.7
 uvicorn==0.34.3
 virtualenv==20.29.1
