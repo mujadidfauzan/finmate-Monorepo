@@ -4,9 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
 import { transcribeVoice } from '../utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+//  Hardcode Token
 import Constants from 'expo-constants';
-
 const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
+//
 
 const VoiceInputScreen = ({ navigation }) => {
   const [isRecording, setIsRecording] = useState(false);
