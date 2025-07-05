@@ -21,14 +21,14 @@ const ReportsScreen = () => {
 
   // Process transactions to get report data
   const totalIncome = transactions
-    .filter(t => t.type === 'pemasukan')
+    .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
+  const expenseTransactions = transactions.filter(t => t.type === 'expense');
   const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
   
   const totalSavings = transactions
-    .filter(t => t.type === 'tabungan')
+    .filter(t => t.type === 'savings')
     .reduce((sum, t) => sum + t.amount, 0);
 
   // Daily expenses for the last 7 days
@@ -43,7 +43,7 @@ const ReportsScreen = () => {
     const dayOfWeek = date.toLocaleDateString('id-ID', { weekday: 'short' });
     const expensesOnDay = expenseTransactions
       .filter(t => {
-        const tDate = new Date(t.date);
+        const tDate = new Date(t.transaction_date);
         return tDate.getFullYear() === date.getFullYear() &&
                tDate.getMonth() === date.getMonth() &&
                tDate.getDate() === date.getDate();
@@ -91,7 +91,7 @@ const ReportsScreen = () => {
     
     const expensesInMonth = expenseTransactions
       .filter(t => {
-        const tDate = new Date(t.date);
+        const tDate = new Date(t.transaction_date);
         return tDate.getMonth() === month && tDate.getFullYear() === year;
       })
       .reduce((sum, t) => sum + t.amount, 0);

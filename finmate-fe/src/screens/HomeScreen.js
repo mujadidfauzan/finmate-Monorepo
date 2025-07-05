@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,32 +6,58 @@ import {
   SafeAreaView,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Button,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useTransactions } from '../context/TransactionsContext';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { getProfile } from '../utils/api';
+import Constants from 'expo-constants';
+
+const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
 
 export default function HomeScreen({ navigation }) {
-  const { transactions } = useTransactions();
+  const { transactions, loading, error, fetchTransactions } = useTransactions();
+  const [user, setUser] = useState(null);
 
-  const totalIncome = transactions
-    .filter(t => t.type === 'pemasukan')
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profileData = await getProfile(DEFAULT_TOKEN);
+        setUser(profileData);
+      } catch (err) {
+        console.error('Failed to load profile', err);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const onRefresh = useCallback(() => {
+    fetchTransactions();
+  }, []);
+
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+  const totalIncome = safeTransactions
+    .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalExpense = transactions
-    .filter(t => t.type === 'pengeluaran')
+  const totalExpense = safeTransactions
+    .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0);
 
-  const totalSavings = transactions
-    .filter(t => t.type === 'tabungan')
+  const totalSavings = safeTransactions
+    .filter(t => t.type === 'savings')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const netAsset = totalIncome - totalExpense;
   const availableBalance = netAsset - totalSavings;
 
-  const transactionsByDate = transactions.reduce((acc, t) => {
-    const d = new Date(t.date);
+  const transactionsByDate = safeTransactions.reduce((acc, t) => {
+    const d = new Date(t.transaction_date);
     const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     
     if (!acc[dateKey]) {
@@ -42,29 +68,36 @@ export default function HomeScreen({ navigation }) {
   }, {});
 
   const sortedDates = Object.keys(transactionsByDate).sort((a, b) => b.localeCompare(a));
-  
-  return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>M</Text>
-          </View>
-          <View>
-            <Text style={styles.greeting}>Hai Mujaddid!</Text>
-            <Text style={styles.subGreeting}>Selamat sore!</Text>
-          </View>
-        </View>
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        
+  const renderContent = () => {
+    if (loading && safeTransactions.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#2ABF83" />
+        </View>
+      );
+    }
+
+    if (error) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>Failed to load transactions.</Text>
+          <Button title="Try Again" onPress={fetchTransactions} color="#2ABF83" />
+        </View>
+      );
+    }
+
+    if (safeTransactions.length === 0) {
+      return (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No transactions recorded yet.</Text>
+          <Text style={styles.emptySubText}>Pull down to refresh.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <>
         {/* Aset Bersih Card */}
         <View style={styles.assetCard}>
           <Text style={styles.assetLabel}>Aset Bersih</Text>
@@ -95,11 +128,11 @@ export default function HomeScreen({ navigation }) {
             </View>
           </View>
         </View>
-        
+
         {sortedDates.map(date => {
           const [year, month, day] = date.split('-').map(Number);
           const displayDate = new Date(year, month - 1, day);
-          
+
           return (
             <View key={date} style={styles.tomorrowSection}>
               <Text style={styles.tomorrowTitle}>{formatDate(displayDate, 'long')}</Text>
@@ -109,18 +142,18 @@ export default function HomeScreen({ navigation }) {
                 let amountColor = '#E53935';
                 let iconBgColor = '#FFEBEE';
 
-                if (item.type === 'pemasukan') {
+                if (item.type === 'income') {
                   iconName = 'arrow-down-circle-outline';
                   iconColor = '#43A047'; // Green for income
                   amountColor = '#43A047';
                   iconBgColor = '#E8F5E9';
-                } else if (item.type === 'tabungan') {
+                } else if (item.type === 'savings') {
                   iconName = 'wallet-outline';
                   iconColor = '#1E88E5'; // Blue for savings
                   amountColor = '#1E88E5';
                   iconBgColor = '#E3F2FD';
                 }
-                
+
                 return (
                   <View key={item.id} style={styles.transactionItem}>
                     <View style={[styles.transactionIcon, { backgroundColor: iconBgColor }]}>
@@ -139,6 +172,39 @@ export default function HomeScreen({ navigation }) {
             </View>
           );
         })}
+      </>
+    );
+  };
+  
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{user ? user.name.charAt(0).toUpperCase() : '?'}</Text>
+          </View>
+          <View>
+            <Text style={styles.greeting}>Hai {user ? user.name : 'User'}!</Text>
+            <Text style={styles.subGreeting}>Selamat datang!</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color="#000" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ paddingBottom: 120 }}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={onRefresh} colors={["#2ABF83"]} />
+        }
+      >
+        {renderContent()}
       </ScrollView>
     </SafeAreaView>
   );
@@ -405,5 +471,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#000000',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#E53935',
+    marginBottom: 10,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#8E8E93',
+  },
+  emptySubText: {
+    fontSize: 12,
+    color: '#8E8E93',
+    marginTop: 4,
   },
 });

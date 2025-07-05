@@ -33,7 +33,7 @@ async def get_transactions(
     end_date: Optional[str] = None,
     user=Depends(get_current_user),
 ):
-    user_id = user["user_id"]
+    user_id = user["id"]
     filters = f"&user_id=eq.{user_id}"
 
     if type:

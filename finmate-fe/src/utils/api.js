@@ -2,7 +2,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 
 //Jan, Base URlnya rubah ya sesuai IP address laptop lu
-const BASE_URL = 'http://10.0.2.2:8000';
+const BASE_URL = 'http://192.168.140.177:8000';
 const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
 console.log('Using DEFAULT_TOKEN:', DEFAULT_TOKEN);
 
@@ -55,7 +55,7 @@ export const getTransactions = async (token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data;
+    return response.data.data;
   } catch (error) {
     console.error('Get transactions error:', error);
     throw error;
@@ -116,6 +116,20 @@ export const getOrCreateSession = async (token = DEFAULT_TOKEN) => {
     return response.data;
   } catch (error) {
     console.error('Session error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getProfile = async (token) => {
+  try {
+    const response = await axios.get(`${BASE_URL}/profile`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Get profile error:', error.response?.data || error.message);
     throw error;
   }
 };
