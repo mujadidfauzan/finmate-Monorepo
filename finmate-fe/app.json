@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "finmate-fe",
+    "slug": "finmate-fe",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo-final.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo-final.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo-final.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.vitosolinnn.finmatefe"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "@react-native-voice/voice"
+    ]
+  }
+}
