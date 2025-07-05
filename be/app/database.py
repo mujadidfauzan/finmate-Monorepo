@@ -6,6 +6,7 @@ import uuid
 
 import httpx
 from app.config import SUPABASE_KEY, SUPABASE_URL
+from fastapi import HTTPException
 
 # Headers global
 headers = {
@@ -44,6 +45,15 @@ async def insert_data(table: str, data: dict):
             headers=headers_with_prefer,
             content=json.dumps(data, cls=CustomJSONEncoder),
         )
+        
+        # Proper error handling based on status code
+        if res.status_code >= 400:
+            try:
+                detail = res.json()
+            except json.JSONDecodeError:
+                detail = res.text
+            raise HTTPException(status_code=res.status_code, detail=detail)
+
         if res.text:
             return res.json()
         return {"message": "Insert successful", "status": res.status_code}

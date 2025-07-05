@@ -14,36 +14,61 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
+  Button, // Import Button
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
+import { chatWithBot, getOrCreateSession } from '../utils/api';
 
 const { width, height } = Dimensions.get('window');
 
 const ChatbotScreen = ({ navigation }) => {
-  const [allChats, setAllChats] = useState([
-    {
-      id: `chat_${Date.now()}`,
-      title: `Percakapan Awal`,
-      subtitle: 'Selamat Pagi, Mujadid',
-      timestamp: new Date(),
-      messages: [
-        {
-          id: 1,
-          text: 'Selamat Pagi, Mujadid',
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ],
-    },
-  ]);
-
-  const [activeChatId, setActiveChatId] = useState(allChats[0].id);
+  const [allChats, setAllChats] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
   const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // For sending messages
+  const [isInitializing, setIsInitializing] = useState(true); // For initial load
+  const [initializationFailed, setInitializationFailed] = useState(false); // For initial load error
   const [showSidebar, setShowSidebar] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const sidebarAnimation = useRef(new Animated.Value(-width * 0.8)).current;
   const scrollViewRef = useRef();
+
+  const initializeChat = async () => {
+    setIsInitializing(true);
+    setInitializationFailed(false);
+    try {
+      const sessionData = await getOrCreateSession();
+      const sessionId = sessionData.session_id;
+
+      const initialChat = {
+        id: sessionId,
+        title: `Percakapan Awal`,
+        subtitle: 'Selamat Datang!',
+        timestamp: new Date(),
+        messages: [
+          {
+            id: 1,
+            text: 'Halo! Ada yang bisa saya bantu dengan keuangan Anda hari ini?',
+            isBot: true,
+            timestamp: new Date(),
+          },
+        ],
+      };
+      setAllChats([initialChat]);
+      setActiveChatId(sessionId);
+    } catch (error) {
+      setInitializationFailed(true);
+      console.error("Initialize chat error:", error);
+    } finally {
+      setIsInitializing(false);
+    }
+  };
+
+  useEffect(() => {
+    initializeChat();
+  }, []);
 
   const activeChat = allChats.find(chat => chat.id === activeChatId);
 
@@ -58,58 +83,106 @@ const ChatbotScreen = ({ navigation }) => {
     }).start();
   };
 
-  const sendMessage = () => {
-    if (inputText.trim() && activeChatId) {
-      const newMessage = {
+  const sendMessage = async () => {
+    if (inputText.trim() && activeChatId && !isLoading) {
+      const userMessage = {
         id: Date.now(),
         text: inputText,
         isBot: false,
         timestamp: new Date(),
       };
       
-      const botResponse = {
-        id: Date.now() + 1,
-        text: 'Hai FinMate, ini adalah respons otomatis.',
-        isBot: true,
-        timestamp: new Date(),
-      };
-      
-      const updatedChats = allChats.map(chat => {
-        if (chat.id === activeChatId) {
-          return {
-            ...chat,
-            messages: [...chat.messages, newMessage, botResponse],
-            subtitle: inputText,
-            timestamp: new Date(),
-          };
-        }
-        return chat;
-      });
-
-      setAllChats(updatedChats.sort((a, b) => b.timestamp - a.timestamp));
+      const currentInput = inputText;
       setInputText('');
+      
+      setAllChats(prevChats => {
+        const updated = prevChats.map(chat => {
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, userMessage],
+              subtitle: currentInput,
+              timestamp: new Date(),
+            };
+          }
+          return chat;
+        });
+        return updated.sort((a, b) => b.timestamp - a.timestamp);
+      });
+      setIsLoading(true);
+
+      try {
+        const botData = await chatWithBot(currentInput, activeChatId);
+        
+        const botResponse = {
+          id: Date.now() + 1,
+          text: botData.reply,
+          isBot: true,
+          timestamp: new Date(),
+        };
+        
+        setAllChats(prevChats => prevChats.map(chat => {
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, botResponse],
+            };
+          }
+          return chat;
+        }));
+
+      } catch (error) {
+        console.error("Failed to get bot response:", error);
+        const errorResponse = {
+          id: Date.now() + 1,
+          text: 'Maaf, terjadi kesalahan saat menghubungi server.',
+          isBot: true,
+          timestamp: new Date(),
+        };
+        setAllChats(prevChats => prevChats.map(chat => {
+          if (chat.id === activeChatId) {
+            return {
+              ...chat,
+              messages: [...chat.messages, errorResponse],
+            };
+          }
+          return chat;
+        }));
+        Alert.alert("Error", error.message || "Gagal mengirim pesan.");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handleNewChat = () => {
-    const newChatId = `chat_${Date.now()}`;
-    const newChat = {
-      id: newChatId,
-      title: `Percakapan Baru`,
-      subtitle: 'Mulai percakapan...',
-      timestamp: new Date(),
-      messages: [
-        {
-          id: 1,
-          text: 'Halo! Ada yang bisa saya bantu dengan keuangan Anda hari ini?',
-          isBot: true,
-          timestamp: new Date(),
-        },
-      ],
-    };
-    setAllChats(prev => [newChat, ...prev].sort((a,b) => b.timestamp - a.timestamp));
-    setActiveChatId(newChatId);
-    toggleSidebar();
+  const handleNewChat = async () => {
+    // This function can also be improved to not add a chat if session creation fails
+    try {
+      // It might be better to show a loader here as well
+      const sessionData = await getOrCreateSession();
+      const newChatId = sessionData.session_id;
+      
+      const newChat = {
+        id: newChatId,
+        title: `Percakapan Baru`,
+        subtitle: 'Mulai percakapan...',
+        timestamp: new Date(),
+        messages: [
+          {
+            id: 1,
+            text: 'Halo! Ada yang bisa saya bantu dengan keuangan Anda hari ini?',
+            isBot: true,
+            timestamp: new Date(),
+          },
+        ],
+      };
+      setAllChats(prev => [newChat, ...prev].sort((a,b) => b.timestamp - a.timestamp));
+      setActiveChatId(newChatId);
+      toggleSidebar();
+    } catch (error) {
+      Alert.alert("Error", "Tidak dapat membuat obrolan baru. Periksa koneksi Anda.");
+      console.error("New chat error:", error);
+    }
   };
 
   const handleSelectChat = (chatId) => {
@@ -179,6 +252,27 @@ const ChatbotScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  // Conditional rendering for the main component
+  if (isInitializing) {
+    return (
+      <SafeAreaView style={styles.centeredContainer}>
+        <ActivityIndicator size="large" color="#2ABF83" />
+        <Text style={styles.loadingText}>Memulai Sesi Chat...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (initializationFailed) {
+    return (
+      <SafeAreaView style={styles.centeredContainer}>
+        <Ionicons name="cloud-offline-outline" size={60} color="#888" />
+        <Text style={styles.errorText}>Gagal Terhubung ke Server</Text>
+        <Text style={styles.errorSubText}>Pastikan backend Anda berjalan dan alamat IP sudah benar.</Text>
+        <Button title="Coba Lagi" onPress={initializeChat} color="#2ABF83" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
@@ -228,14 +322,20 @@ const ChatbotScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
           <TouchableOpacity 
-            style={styles.sendButton}
+            style={[styles.sendButton, isLoading && styles.disabledButton]}
             onPress={sendMessage}
+            disabled={isLoading}
           >
-            <Ionicons name="send" size={20} color="white" />
+            {isLoading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="send" size={20} color="white" />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
 
+      {/* Sidebar and Modals remain the same */}
       {/* Sidebar */}
       <Animated.View 
         style={[
@@ -307,6 +407,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     paddingBottom: 80,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#555',
+  },
+  errorText: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  errorSubText: {
+    marginTop: 8,
+    marginBottom: 20,
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -392,6 +518,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#A9A9A9',
   },
   sidebar: {
     position: 'absolute',

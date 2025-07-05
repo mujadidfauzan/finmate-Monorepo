@@ -1,7 +1,8 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-const BASE_URL = 'http://192.168.1.10:8000';
+//Jan, Base URlnya rubah ya sesuai IP address laptop lu
+const BASE_URL = 'http://10.0.2.2:8000';
 const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
 console.log('Using DEFAULT_TOKEN:', DEFAULT_TOKEN);
 
@@ -84,6 +85,37 @@ export const register = async (username, password, email) => {
     return response.data;
   } catch (error) {
     console.error('Register error:', error);
+    throw error;
+  }
+};
+
+export const chatWithBot = async (message, session_id, token = DEFAULT_TOKEN) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/chat/chatbot/message`, {
+      message: message,
+      session_id: session_id,
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Chat error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getOrCreateSession = async (token = DEFAULT_TOKEN) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/chat/chatbot/session`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Session error:', error.response?.data || error.message);
     throw error;
   }
 };
