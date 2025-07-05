@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTransactions } from '../context/TransactionsContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -47,6 +48,7 @@ const ManualTransactionScreen = ({ navigation }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const { addTransaction } = useTransactions();
 
   const currentCategories = activeTab === 'Pengeluaran' ? expenseCategories : incomeCategories;
 
@@ -78,20 +80,21 @@ const ManualTransactionScreen = ({ navigation }) => {
     }
 
     const transactionData = {
-      category: selectedCategory,
+      category: selectedCategory.name,
       amount: parseInt(amount),
       notes: notes,
       date: new Date().toISOString(),
       type: activeTab.toLowerCase(),
     };
 
-    console.log('Transaction Data:', transactionData);
+    addTransaction(transactionData);
     Alert.alert('Berhasil', `${activeTab} berhasil ditambahkan!`);
     
     // Reset form
     setSelectedCategory(null);
     setAmount('');
     setNotes('');
+    navigation.goBack();
   };
 
   const formatAmount = (value) => {
