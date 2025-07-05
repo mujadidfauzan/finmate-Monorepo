@@ -30,7 +30,7 @@ export const formatDate = (date, format = 'medium') => {
     },
   };
   
-  return dateObj.toLocaleDateString('en-US', options[format]);
+  return dateObj.toLocaleDateString('id-ID', options[format]);
 };
 
 export const formatTime = (date, includeSeconds = false) => {

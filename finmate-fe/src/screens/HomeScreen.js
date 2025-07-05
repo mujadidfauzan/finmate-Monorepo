@@ -26,15 +26,17 @@ export default function HomeScreen({ navigation }) {
   const netAsset = totalIncome - totalExpense;
 
   const transactionsByDate = transactions.reduce((acc, t) => {
-    const date = new Date(t.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-    if (!acc[date]) {
-      acc[date] = [];
+    const d = new Date(t.date);
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    if (!acc[dateKey]) {
+      acc[dateKey] = [];
     }
-    acc[date].push(t);
+    acc[dateKey].push(t);
     return acc;
   }, {});
 
-  const sortedDates = Object.keys(transactionsByDate).sort((a, b) => new Date(b) - new Date(a));
+  const sortedDates = Object.keys(transactionsByDate).sort((a, b) => b.localeCompare(a));
   
   return (
     <SafeAreaView style={styles.container}>
@@ -89,25 +91,30 @@ export default function HomeScreen({ navigation }) {
           </View>
         </View>
         
-        {sortedDates.map(date => (
-          <View key={date} style={styles.tomorrowSection}>
-            <Text style={styles.tomorrowTitle}>{formatDate(new Date(date), 'long')}</Text>
-            {transactionsByDate[date].map(item => (
-              <View key={item.id} style={styles.transactionItem}>
-                <View style={styles.transactionIcon}>
-                  <Ionicons name="restaurant-outline" size={20} color="#FF9500" />
+        {sortedDates.map(date => {
+          const [year, month, day] = date.split('-').map(Number);
+          const displayDate = new Date(year, month - 1, day);
+          
+          return (
+            <View key={date} style={styles.tomorrowSection}>
+              <Text style={styles.tomorrowTitle}>{formatDate(displayDate, 'long')}</Text>
+              {transactionsByDate[date].map(item => (
+                <View key={item.id} style={styles.transactionItem}>
+                  <View style={styles.transactionIcon}>
+                    <Ionicons name="restaurant-outline" size={20} color="#FF9500" />
+                  </View>
+                  <View style={styles.transactionDetails}>
+                    <Text style={styles.transactionTitle}>{item.category}</Text>
+                    {item.notes ? <Text>{item.notes}</Text> : null}
+                  </View>
+                  <Text style={[styles.transactionAmount, { color: item.type === 'pengeluaran' ? 'red' : 'green' }]}>
+                    {formatCurrency(item.amount)}
+                  </Text>
                 </View>
-                <View style={styles.transactionDetails}>
-                  <Text style={styles.transactionTitle}>{item.category}</Text>
-                  {item.notes ? <Text>{item.notes}</Text> : null}
-                </View>
-                <Text style={[styles.transactionAmount, { color: item.type === 'pengeluaran' ? 'red' : 'green' }]}>
-                  {formatCurrency(item.amount)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        ))}
+              ))}
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
