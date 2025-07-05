@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import COLORS from '../styles/colors';
 import { useTransactions } from '../context/TransactionsContext';
 import { useSavings } from '../context/SavingsContext';
+import { useBudget } from '../context/BudgetContext';
 import { formatCurrency } from '../utils/formatters';
 
 const { width } = Dimensions.get('window');
@@ -21,28 +22,16 @@ const BudgetScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('anggaran');
   const { transactions } = useTransactions();
   const { savingsPlans } = useSavings();
+  const { budgetCategories } = useBudget();
 
   // --- Dynamic Budget Data Calculation ---
   const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
 
-  // Base budget structure (in a real app, this would be user-configurable)
-  const budgetTemplate = {
-    totalBudget: 3000000,
-    categories: [
-      { name: 'Makan', total: 800000, color: '#34C759' },
-      { name: 'Transportasi', total: 500000, color: '#007AFF' },
-      { name: 'Listrik', total: 300000, color: '#FF9500' },
-      { name: 'Kucing', total: 200000, color: '#AF52DE' },
-      { name: 'Langganan', total: 200000, color: '#5856D6' },
-      { name: 'Pendidikan', total: 500000, color: '#FF3B30' },
-    ]
-  };
-
-  // Calculate total used amount from all expense transactions
+  const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.total, 0);
   const totalUsed = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   // Calculate details for each budgeted category
-  const updatedCategories = budgetTemplate.categories.map(category => {
+  const updatedCategories = budgetCategories.map(category => {
     const usedForCategory = expenseTransactions
       .filter(t => t.category.toLowerCase() === category.name.toLowerCase())
       .reduce((sum, t) => sum + t.amount, 0);
@@ -54,10 +43,10 @@ const BudgetScreen = ({ navigation }) => {
   });
 
   const budgetData = {
-    totalBudget: budgetTemplate.totalBudget,
+    totalBudget: totalBudget,
     used: totalUsed,
-    remaining: budgetTemplate.totalBudget - totalUsed,
-    percentage: budgetTemplate.totalBudget > 0 ? Math.min(Math.round((totalUsed / budgetTemplate.totalBudget) * 100), 100) : 0,
+    remaining: totalBudget - totalUsed,
+    percentage: totalBudget > 0 ? Math.min(Math.round((totalUsed / totalBudget) * 100), 100) : 0,
     categories: updatedCategories,
   };
   // --- End of Dynamic Data Calculation ---
@@ -114,7 +103,7 @@ const BudgetScreen = ({ navigation }) => {
       <View style={styles.categoriesSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rincian Anggaran</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddBudgetCategory')}>
             <Ionicons name="add" size={24} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
@@ -123,7 +112,7 @@ const BudgetScreen = ({ navigation }) => {
           <View key={index} style={styles.categoryCard}>
             <View style={styles.categoryHeader}>
               <Text style={styles.categoryName}>{category.name}</Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('EditBudgetCategory', { category })}>
                 <Ionicons name="create-outline" size={20} color={COLORS.gray} />
               </TouchableOpacity>
             </View>
