@@ -12,6 +12,7 @@ import MainTabNavigator from './MainTabNavigator';
 import ManualTransactionScreen from '../screens/ManualTransactionScreen';
 import ScanReceiptScreen from '../screens/ScanReceiptScreen';
 import VoiceInputScreen from '../screens/VoiceInputScreen';
+import AddSavingsPlanScreen from '../screens/AddSavingsPlanScreen';
 
 const Stack = createStackNavigator();
 
@@ -45,6 +46,7 @@ export default function AppNavigator() {
           name="VoiceInput" 
           component={VoiceInputScreen} 
         />
+        <Stack.Screen name="AddSavingsPlan" component={AddSavingsPlanScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

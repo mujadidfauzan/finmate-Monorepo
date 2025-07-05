@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import COLORS from '../styles/colors';
 import { useTransactions } from '../context/TransactionsContext';
+import { useSavings } from '../context/SavingsContext';
 import { formatCurrency } from '../utils/formatters';
 
 const { width } = Dimensions.get('window');
@@ -19,6 +20,7 @@ const { width } = Dimensions.get('window');
 const BudgetScreen = ({ navigation }) => {
   const [activeTab, setActiveTab] = useState('anggaran');
   const { transactions } = useTransactions();
+  const { savingsPlans } = useSavings();
 
   // --- Dynamic Budget Data Calculation ---
   const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
@@ -60,15 +62,16 @@ const BudgetScreen = ({ navigation }) => {
   };
   // --- End of Dynamic Data Calculation ---
 
-  // Sample data for Tabungan (Savings) - stays as dummy data for now
+  // --- DYNAMIC SAVINGS DATA ---
+  const totalSavingsTarget = savingsPlans.reduce((sum, plan) => sum + plan.target, 0);
+  const totalSavingsCollected = savingsPlans.reduce((sum, plan) => sum + plan.collected, 0);
+
   const savingsData = {
-    target: 5000000,
-    collected: 2500000,
-    remaining: 2500000,
-    percentage: 50,
-    plans: [
-      { name: 'Tabungan Nikah', target: 5000000, collected: 2500000, icon: 'gift' }
-    ]
+    target: totalSavingsTarget,
+    collected: totalSavingsCollected,
+    remaining: totalSavingsTarget - totalSavingsCollected,
+    percentage: totalSavingsTarget > 0 ? Math.min(Math.round((totalSavingsCollected / totalSavingsTarget) * 100), 100) : 0,
+    plans: savingsPlans
   };
 
   const renderProgressCircle = (percentage, size = 80, strokeWidth = 8) => {
@@ -174,7 +177,7 @@ const BudgetScreen = ({ navigation }) => {
       <View style={styles.categoriesSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Rencana Tabungan</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddSavingsPlan')}>
             <Ionicons name="add" size={24} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
@@ -190,7 +193,7 @@ const BudgetScreen = ({ navigation }) => {
               </View>
               <View style={styles.savingsProgress}>
                 <View style={styles.progressBar}>
-                  <View style={[styles.progressFill, { width: `${savingsData.percentage}%` }]} />
+                  <View style={[styles.progressFill, { width: `${plan.target > 0 ? (plan.collected / plan.target) * 100 : 0}%` }]} />
                 </View>
                 <View style={styles.savingsAmounts}>
                   <Text style={styles.savingsAmount}>{formatCurrency(plan.collected)}</Text>
