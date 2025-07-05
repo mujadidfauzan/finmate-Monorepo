@@ -27,7 +27,9 @@ const ReportsScreen = () => {
   const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
   const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
   
-  const totalSavings = totalIncome - totalExpense;
+  const totalSavings = transactions
+    .filter(t => t.type === 'tabungan')
+    .reduce((sum, t) => sum + t.amount, 0);
 
   // Daily expenses for the last 7 days
   const today = new Date();

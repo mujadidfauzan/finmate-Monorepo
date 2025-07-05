@@ -22,8 +22,13 @@ export default function HomeScreen({ navigation }) {
   const totalExpense = transactions
     .filter(t => t.type === 'pengeluaran')
     .reduce((sum, t) => sum + t.amount, 0);
+
+  const totalSavings = transactions
+    .filter(t => t.type === 'tabungan')
+    .reduce((sum, t) => sum + t.amount, 0);
   
   const netAsset = totalIncome - totalExpense;
+  const availableBalance = netAsset - totalSavings;
 
   const transactionsByDate = transactions.reduce((acc, t) => {
     const d = new Date(t.date);
@@ -66,12 +71,12 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.assetAmount}>{formatCurrency(netAsset)}</Text>
           <View style={styles.assetBreakdown}>
             <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>Pemasukan</Text>
-              <Text style={styles.breakdownValue}>{formatCurrency(totalIncome)}</Text>
+              <Text style={styles.breakdownLabel}>Saldo Tersedia</Text>
+              <Text style={styles.breakdownValue}>{formatCurrency(availableBalance)}</Text>
             </View>
             <View style={styles.breakdownItem}>
-              <Text style={styles.breakdownLabel}>Pengeluaran</Text>
-              <Text style={styles.breakdownValue}>{formatCurrency(totalExpense)}</Text>
+              <Text style={styles.breakdownLabel}>Total Tabungan</Text>
+              <Text style={styles.breakdownValue}>{formatCurrency(totalSavings)}</Text>
             </View>
           </View>
         </View>
@@ -98,20 +103,39 @@ export default function HomeScreen({ navigation }) {
           return (
             <View key={date} style={styles.tomorrowSection}>
               <Text style={styles.tomorrowTitle}>{formatDate(displayDate, 'long')}</Text>
-              {transactionsByDate[date].map(item => (
-                <View key={item.id} style={styles.transactionItem}>
-                  <View style={styles.transactionIcon}>
-                    <Ionicons name="restaurant-outline" size={20} color="#FF9500" />
+              {transactionsByDate[date].map(item => {
+                let iconName = 'cart-outline';
+                let iconColor = '#E53935'; // Red for expense
+                let amountColor = '#E53935';
+                let iconBgColor = '#FFEBEE';
+
+                if (item.type === 'pemasukan') {
+                  iconName = 'arrow-down-circle-outline';
+                  iconColor = '#43A047'; // Green for income
+                  amountColor = '#43A047';
+                  iconBgColor = '#E8F5E9';
+                } else if (item.type === 'tabungan') {
+                  iconName = 'wallet-outline';
+                  iconColor = '#1E88E5'; // Blue for savings
+                  amountColor = '#1E88E5';
+                  iconBgColor = '#E3F2FD';
+                }
+                
+                return (
+                  <View key={item.id} style={styles.transactionItem}>
+                    <View style={[styles.transactionIcon, { backgroundColor: iconBgColor }]}>
+                      <Ionicons name={iconName} size={20} color={iconColor} />
+                    </View>
+                    <View style={styles.transactionDetails}>
+                      <Text style={styles.transactionTitle}>{item.category}</Text>
+                      {item.notes ? <Text style={styles.transactionNotes}>{item.notes}</Text> : null}
+                    </View>
+                    <Text style={[styles.transactionAmount, { color: amountColor }]}>
+                      {formatCurrency(item.amount)}
+                    </Text>
                   </View>
-                  <View style={styles.transactionDetails}>
-                    <Text style={styles.transactionTitle}>{item.category}</Text>
-                    {item.notes ? <Text>{item.notes}</Text> : null}
-                  </View>
-                  <Text style={[styles.transactionAmount, { color: item.type === 'pengeluaran' ? 'red' : 'green' }]}>
-                    {formatCurrency(item.amount)}
-                  </Text>
-                </View>
-              ))}
+                );
+              })}
             </View>
           );
         })}
@@ -372,6 +396,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#000000',
+  },
+  transactionNotes: {
+    fontSize: 12,
+    color: '#8E8E93',
   },
   transactionAmount: {
     fontSize: 14,

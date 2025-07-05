@@ -26,6 +26,7 @@ const BudgetScreen = ({ navigation }) => {
 
   // --- Dynamic Budget Data Calculation ---
   const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
+  const savingsTransactions = transactions.filter(t => t.type === 'tabungan');
 
   const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.total, 0);
   const totalUsed = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
@@ -54,6 +55,12 @@ const BudgetScreen = ({ navigation }) => {
   // --- DYNAMIC SAVINGS DATA ---
   const totalSavingsTarget = savingsPlans.reduce((sum, plan) => sum + plan.target, 0);
   const totalSavingsCollected = savingsPlans.reduce((sum, plan) => sum + plan.collected, 0);
+
+  const totalIncome = transactions
+    .filter(t => t.type === 'pemasukan')
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const surplus = totalIncome - totalUsed - savingsTransactions.reduce((sum, t) => sum + t.amount, 0);
 
   const savingsData = {
     target: totalSavingsTarget,
@@ -170,6 +177,14 @@ const BudgetScreen = ({ navigation }) => {
             <Ionicons name="add" size={24} color={COLORS.gray} />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity 
+          style={styles.allocateButton} 
+          onPress={() => navigation.navigate('AllocateSavings', { surplus: Math.max(0, surplus) })}
+        >
+          <Text style={styles.allocateButtonText}>Alokasikan Dana</Text>
+          <Text style={styles.allocateButtonAmount}>{formatCurrency(Math.max(0, surplus))}</Text>
+        </TouchableOpacity>
 
         {savingsData.plans.map((plan, index) => (
           <View key={index} style={styles.savingsCard}>
@@ -420,6 +435,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
   },
+  allocateButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  allocateButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  allocateButtonAmount: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '500',
+  }
 });
 
 export default BudgetScreen; 
