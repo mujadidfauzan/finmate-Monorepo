@@ -9,18 +9,18 @@ from pydantic import BaseModel, EmailStr, Field
 
 class TransactionCreate(BaseModel):
     amount: float
-    type: str = Field(..., pattern="^(income|expense)$")
+    type: str = Field(..., pattern="^(income|expense|budget|savings_plan|savings)$")
     category: str
-    method: str = Field(..., pattern="^(manual|voice|ocr)$")
+    method: str = Field(..., pattern="^(manual|voice|ocr|system)$")
     note: Optional[str]
     transaction_date: date
 
 
 class TransactionUpdate(BaseModel):
     amount: Optional[float]
-    type: Optional[str] = Field(None, pattern="^(income|expense)$")
+    type: Optional[str] = Field(None, pattern="^(income|expense|budget|savings_plan|savings)$")
     category: Optional[str]
-    method: Optional[str] = Field(None, pattern="^(manual|voice|ocr)$")
+    method: Optional[str] = Field(None, pattern="^(manual|voice|ocr|system)$")
     note: Optional[str]
     transaction_date: Optional[date]
 

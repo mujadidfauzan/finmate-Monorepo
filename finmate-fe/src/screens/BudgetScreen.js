@@ -25,8 +25,8 @@ const BudgetScreen = ({ navigation }) => {
   const { budgetCategories } = useBudget();
 
   // --- Dynamic Budget Data Calculation ---
-  const expenseTransactions = transactions.filter(t => t.type === 'pengeluaran');
-  const savingsTransactions = transactions.filter(t => t.type === 'tabungan');
+  const expenseTransactions = transactions.filter(t => t.type === 'expense');
+  const savingsTransactions = transactions.filter(t => t.type === 'savings');
 
   const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.total, 0);
   const totalUsed = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
@@ -57,7 +57,7 @@ const BudgetScreen = ({ navigation }) => {
   const totalSavingsCollected = savingsPlans.reduce((sum, plan) => sum + plan.collected, 0);
 
   const totalIncome = transactions
-    .filter(t => t.type === 'pemasukan')
+    .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0);
   
   const surplus = totalIncome - totalUsed - savingsTransactions.reduce((sum, t) => sum + t.amount, 0);

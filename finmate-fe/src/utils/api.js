@@ -174,6 +174,38 @@ export const deleteTransaction = async (transactionId, token = DEFAULT_TOKEN) =>
   }
 };
 
+export const createBudgetCategory = async (budgetData, token = DEFAULT_TOKEN) => {
+  try {
+    const transactionPayload = {
+      ...budgetData,
+      type: 'budget',
+      method: 'system',
+      transaction_date: new Date().toISOString().split('T')[0],
+      note: `Budget definition for ${budgetData.category}`,
+    };
+    return await createTransaction(transactionPayload, token);
+  } catch (error) {
+    console.error('Create budget category error:', error);
+    throw error;
+  }
+};
+
+export const createSavingsPlan = async (planData, token = DEFAULT_TOKEN) => {
+  try {
+    const transactionPayload = {
+      ...planData,
+      type: 'savings_plan',
+      method: 'system',
+      transaction_date: new Date().toISOString().split('T')[0],
+      note: `Savings plan definition for ${planData.category}`,
+    };
+    return await createTransaction(transactionPayload, token);
+  } catch (error) {
+    console.error('Create savings plan error:', error);
+    throw error;
+  }
+};
+
 // Authentication functions
 export const login = async (username, password) => {
   try {
@@ -383,6 +415,8 @@ export default {
   createTransaction,
   updateTransaction,
   deleteTransaction,
+  createBudgetCategory,
+  createSavingsPlan,
   login,
   register,
   logout,
