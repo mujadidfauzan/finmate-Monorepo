@@ -11,21 +11,18 @@ router = APIRouter()
 
 
 @router.post("/chatbot/session")
-async def get_or_create_session():  # user=Depends(get_current_user)):
-    # NOTE: Authentication is temporarily disabled for testing.
-    # This now ALWAYS creates a new session for testing multi-chat.
-    user_id = "92a6e1df-5b42-456d-90b1-1234567890ab"  # Use existing user ID from Fauzan
-    # sessions = await fetch_data("chat_sessions", f"&user_id=eq.{user_id}")
-    # if sessions:
-    #     return {"session_id": sessions[0]["id"]}
+async def get_or_create_session(user=Depends(get_current_user)):
+    user_id = user["user_id"]
+    sessions = await fetch_data("chat_sessions", f"&user_id=eq.{user_id}")
+    if sessions:
+        return {"session_id": sessions[0]["id"]}
 
     new_session = await insert_data("chat_sessions", {"user_id": user_id})
-    # The insert_data function returns a list with a single dictionary
     return {"session_id": new_session[0]["id"]}
 
 
 @router.get("/chatbot/history/{session_id}")
-async def get_chat_history(session_id: UUID):  # user=Depends(get_current_user)):
+async def get_chat_history(session_id: UUID, user=Depends(get_current_user)):
     messages = await fetch_data(
         "chat_messages", f"&session_id=eq.{session_id}&order=created_at.asc"
     )
@@ -33,7 +30,7 @@ async def get_chat_history(session_id: UUID):  # user=Depends(get_current_user))
 
 
 @router.post("/chatbot/message")
-async def send_message(req: ChatRequest):  # user=Depends(get_current_user)):
+async def send_message(req: ChatRequest, user=Depends(get_current_user)):
     session_id = str(req.session_id)
 
     messages = await fetch_data(
