@@ -49,9 +49,10 @@ const ManualTransactionScreen = ({ navigation }) => {
     const transactionData = {
       category: selectedCategory.name,
       amount: parseInt(amount),
-      notes: notes,
+      note: notes,
       transaction_date: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
       type: activeTab === 'Pengeluaran' ? 'expense' : 'income',
+      method: 'manual',
     };
 
     setIsLoading(true);

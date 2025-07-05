@@ -12,7 +12,7 @@ router = APIRouter()
 # Membuat transaksi baru
 @router.post("/create")
 async def create_transaction(trans: TransactionCreate, user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]
     data = trans.dict()
     data["user_id"] = user_id
 
@@ -52,7 +52,7 @@ async def get_transactions(
 # Mendapatkan detail transaksi berdasarkan ID transaksi
 @router.get("/{id}")
 async def get_transaction_detail(id: str, user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]
     filters = f"&id=eq.{id}&user_id=eq.{user_id}"  # hanya milik user ini
 
     data = await fetch_data("transactions", filters)
@@ -68,7 +68,7 @@ async def get_transaction_detail(id: str, user=Depends(get_current_user)):
 async def update_transaction(
     id: str, trans: TransactionUpdate, user=Depends(get_current_user)
 ):
-    user_id = user["user_id"]
+    user_id = user["id"]
 
     existing = await fetch_data("transactions", f"&id=eq.{id}&user_id=eq.{user_id}")
     if not existing:
@@ -89,7 +89,7 @@ async def update_transaction(
 # Menghapus transaksi berdasarkan ID transaksi
 @router.delete("/{id}")
 async def delete_transaction(id: str, user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]
 
     existing = await fetch_data("transactions", f"&id=eq.{id}&user_id=eq.{user_id}")
     if not existing:
@@ -106,7 +106,7 @@ async def delete_transaction(id: str, user=Depends(get_current_user)):
 # Mendapatkan ringkasan transaksi untuk user tertentu
 @router.get("/summary")
 async def get_summary(user=Depends(get_current_user)):
-    user_id = user["user_id"]
+    user_id = user["id"]
     filters = f"&user_id=eq.{user_id}"
     data = await fetch_data("transactions", filters)
 

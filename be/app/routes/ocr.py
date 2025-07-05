@@ -74,7 +74,7 @@ async def scan_struk(
             )
 
         # Extract data with fallbacks
-        user_id = user.get("user_id") or user.get("id")
+        user_id = user["id"]
         amount = float(ocr_result.get("total", 0))
         category = ocr_result.get("category", "lainnya")
         trans_date = ocr_result.get("date") or str(date.today())
