@@ -1,15 +1,8 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-<<<<<<< HEAD
-//Jan, Base URlnya rubah ya sesuai IP address laptop lu
-const BASE_URL = 'http://192.168.140.177:8000';
-const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
-console.log('Using DEFAULT_TOKEN:', DEFAULT_TOKEN);
-=======
 const BASE_URL = 'http://192.168.1.10:8000';
 const DEFAULT_TOKEN = Constants.expoConfig?.extra?.DEFAULT_TOKEN || 'default_token';
->>>>>>> f6288c17c01f7ce22db8e98dd4b33b7dadad2576
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -37,7 +30,7 @@ export const scanReceipt = async (imageUri, token = DEFAULT_TOKEN) => {
 
     console.log('Uploading receipt image...');
 
-    const response = await axios.post(`${BASE_URL}/ocr/scan-struk`, formData, {
+    const response = await apiClient.post(`${BASE_URL}/ocr/scan-struk`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
@@ -83,7 +76,7 @@ export const transcribeVoice = async (audioUri, token = DEFAULT_TOKEN) => {
 
     console.log('Uploading audio file:', audioUri);
 
-    const response = await axios.post(`${BASE_URL}/voice/transcribe-voice`, formData, {
+    const response = await apiClient.post(`${BASE_URL}/voice/transcribe-voice`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
@@ -127,15 +120,29 @@ export const getTransactions = async (token = DEFAULT_TOKEN, params = {}) => {
 
 export const createTransaction = async (transactionData, token = DEFAULT_TOKEN) => {
   try {
-    const response = await apiClient.post('/transactions', transactionData, {
+    console.log('Creating transaction:', transactionData);
+
+    const response = await apiClient.post('/transactions/create', transactionData, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
+
+    console.log('Transaction created successfully:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Create transaction error:', error);
-    throw error;
+    console.error('Create Transaction Error:', error.response?.data || error.message);
+
+    if (error.response) {
+      const errorMessage = error.response.data?.detail || error.response.data?.message || 'Server error occurred';
+      throw new Error(errorMessage);
+    } else if (error.request) {
+      throw new Error('No response from server. Please check your connection.');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('Request timeout. Please try again.');
+    } else {
+      throw new Error('Failed to create transaction');
+    }
   }
 };
 
@@ -281,7 +288,7 @@ export const exportTransactions = async (token = DEFAULT_TOKEN, format = 'csv') 
 
 export const chatWithBot = async (message, session_id, token = DEFAULT_TOKEN) => {
   try {
-    const response = await axios.post(
+    const response = await apiClient.post(
       `${BASE_URL}/chat/chatbot/message`,
       {
         message: message,
@@ -302,7 +309,7 @@ export const chatWithBot = async (message, session_id, token = DEFAULT_TOKEN) =>
 
 export const getOrCreateSession = async (token = DEFAULT_TOKEN) => {
   try {
-    const response = await axios.post(
+    const response = await apiClient.post(
       `${BASE_URL}/chat/chatbot/session`,
       {},
       {
@@ -318,10 +325,9 @@ export const getOrCreateSession = async (token = DEFAULT_TOKEN) => {
   }
 };
 
-<<<<<<< HEAD
 export const getProfile = async (token) => {
   try {
-    const response = await axios.get(`${BASE_URL}/profile`, {
+    const response = await apiClient.get(`${BASE_URL}/profile`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -331,7 +337,8 @@ export const getProfile = async (token) => {
     console.error('Get profile error:', error.response?.data || error.message);
     throw error;
   }
-=======
+};
+
 // Utility functions
 export const validateImageFile = (file) => {
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -370,6 +377,7 @@ export default {
   scanReceipt,
   chatWithBot,
   getOrCreateSession,
+  getProfile,
   transcribeVoice,
   getTransactions,
   createTransaction,
@@ -385,5 +393,4 @@ export default {
   validateImageFile,
   formatCurrency,
   formatDate,
->>>>>>> f6288c17c01f7ce22db8e98dd4b33b7dadad2576
 };
