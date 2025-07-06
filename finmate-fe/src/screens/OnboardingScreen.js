@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -127,7 +128,7 @@ const OnboardingScreen = ({ navigation }) => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#2ABF83" barStyle="light-content" />
       
       {/* Header with skip button */}
@@ -156,7 +157,7 @@ const OnboardingScreen = ({ navigation }) => {
       >
         {onboardingData.map((item, index) => renderScreen(item, index))}
       </Animated.View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 10,
     paddingBottom: 15,
     zIndex: 10,
   },

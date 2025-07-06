@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import ReportsScreen from '../screens/ReportsScreen';
@@ -11,6 +12,17 @@ import BudgetScreen from '../screens/BudgetScreen';
 import COLORS from '../styles/colors';
 
 const Tab = createBottomTabNavigator();
+
+const shadowStyle = {
+    shadowColor: COLORS.shadow,
+    shadowOffset: {
+        width: 0,
+        height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5
+};
 
 const handleAddPress = (navigation) => {
     Alert.alert(
@@ -44,7 +56,7 @@ const CustomTabBarButton = ({ children, onPress }) => (
       top: -10,
       justifyContent: 'center',
       alignItems: 'center',
-      ...styles.shadow
+      ...shadowStyle
     }}
     onPress={onPress}
   >
@@ -63,6 +75,7 @@ const CustomTabBarButton = ({ children, onPress }) => (
 
 
 const MainTabNavigator = () => {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -70,15 +83,14 @@ const MainTabNavigator = () => {
         tabBarShowLabel: false,
         tabBarStyle: {
             position: 'absolute',
-            bottom: 0,
+            bottom: insets.bottom > 0 ? insets.bottom - 10 : 0,
             left: 20,
             right: 20,
-            elevation: 0,
             backgroundColor: COLORS.white,
             borderRadius: 15,
             height: 70,
-            ...styles.shadow
-        }
+            ...shadowStyle
+        },
       }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} options={{
@@ -125,16 +137,7 @@ const MainTabNavigator = () => {
 };
 
 const styles = StyleSheet.create({
-    shadow: {
-        shadowColor: COLORS.shadow,
-        shadowOffset: {
-            width: 0,
-            height: 10,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.5,
-        elevation: 5
-    }
+    shadow: shadowStyle,
 })
 
 export default MainTabNavigator; 
