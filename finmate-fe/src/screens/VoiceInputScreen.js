@@ -65,7 +65,30 @@ const VoiceInputScreen = ({ navigation }) => {
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      // Use more compatible recording options
+      const recordingOptions = {
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_HIGH,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+      };
+
+      const { recording } = await Audio.Recording.createAsync(recordingOptions);
 
       setRecording(recording);
       setIsRecording(true);
@@ -93,6 +116,8 @@ const VoiceInputScreen = ({ navigation }) => {
       if (uri) {
         console.log('Recording saved to:', uri);
         await processAudioFile(uri);
+      } else {
+        setError('Failed to save recording');
       }
     } catch (error) {
       console.error('Failed to stop recording:', error);
@@ -119,14 +144,29 @@ const VoiceInputScreen = ({ navigation }) => {
         // Show success alert
         Alert.alert('Success', result.message, [
           {
-            text: 'OK',
+            text: 'View Details',
+            onPress: () => {
+              Alert.alert('Transaction Details', `Amount: ${result.parsed?.amount || 'N/A'}\n` + `Category: ${result.parsed?.category || 'N/A'}\n` + `Type: ${result.parsed?.type || 'N/A'}\n` + `Note: ${result.note || 'N/A'}`, [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            },
+          },
+          {
+            text: 'Done',
             onPress: () => navigation.goBack(),
           },
         ]);
       }
     } catch (error) {
       console.error('Failed to process audio:', error);
-      setError('Failed to process audio: ' + (error.response?.data?.detail || error.message));
+      const errorMessage = error.message || 'Unknown error occurred';
+      setError('Failed to process audio: ' + errorMessage);
+
+      // Show error alert
+      Alert.alert('Error', errorMessage, [
+        { text: 'Try Again', onPress: () => setError('') },
+        { text: 'Cancel', onPress: () => navigation.goBack() },
+      ]);
     }
   };
 
@@ -191,6 +231,8 @@ const VoiceInputScreen = ({ navigation }) => {
         </TouchableOpacity>
 
         {!token && <Text style={styles.warningText}>Please login to use voice recording</Text>}
+
+        <Text style={styles.instructionText}>{isRecording ? 'Speak clearly and tap to stop recording' : 'Hold and speak your transaction details'}</Text>
       </View>
     </View>
   );
@@ -262,6 +304,7 @@ const styles = StyleSheet.create({
     color: 'red',
     marginTop: 10,
     textAlign: 'center',
+    fontSize: 14,
   },
   permissionText: {
     textAlign: 'center',
@@ -271,6 +314,12 @@ const styles = StyleSheet.create({
   warningText: {
     color: '#FF6347',
     fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  instructionText: {
+    color: '#999',
+    fontSize: 12,
     textAlign: 'center',
     marginTop: 10,
   },
