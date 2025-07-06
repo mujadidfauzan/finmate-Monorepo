@@ -1,8 +1,8 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-const BASE_URL = 'http://192.168.1.10:8000';
-const DEFAULT_TOKEN = Constants.expoConfig?.extra?.DEFAULT_TOKEN;
+const BASE_URL = 'http://192.168.1.9:8000';
+const DEFAULT_TOKEN = Constants.expoConfig?.extra?.DEFAULT_TOKEN || 'default_token';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,

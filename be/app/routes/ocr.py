@@ -1,5 +1,4 @@
 # app/routes/ocr.py
-
 import json
 import logging
 import os
@@ -16,7 +15,6 @@ from fastapi.responses import JSONResponse
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 
@@ -27,16 +25,13 @@ async def scan_struk(
 ):
     """
     Endpoint untuk scan struk menggunakan OCR
-
     Args:
         file: Image file (JPG/PNG)
         user: Current authenticated user
         db: Database connection
-
     Returns:
         JSON response with extracted data and saved transaction
     """
-
     # Validate file type
     if not file.content_type or file.content_type not in [
         "image/jpeg",
@@ -52,7 +47,6 @@ async def scan_struk(
         )
 
     temp_file_path = None
-
     try:
         # Read file contents
         contents = await file.read()
@@ -101,6 +95,14 @@ async def scan_struk(
         try:
             save_result = await insert_data("transactions", transaction_data)
             logger.info(f"Transaction saved successfully: {save_result}")
+
+            # Extract the actual record from the list
+            saved_transaction = (
+                save_result[0]
+                if save_result and isinstance(save_result, list)
+                else save_result
+            )
+
         except Exception as db_error:
             logger.error(f"Database error: {str(db_error)}")
             # Return OCR result even if database save fails
@@ -128,7 +130,7 @@ async def scan_struk(
                     "raw_ocr": ocr_result.get("raw_ocr", ""),
                 },
                 "transaction": {
-                    "id": save_result.get("id") if save_result else None,
+                    "id": saved_transaction.get("id") if saved_transaction else None,
                     "amount": amount,
                     "category": category,
                     "date": trans_date,
