@@ -248,9 +248,19 @@ def extract_total_amount(result: Dict) -> float:
     total_str = result.get("total", "")
     if total_str:
         try:
-            # Clean up the total string
+            # Clean up the total string - remove non-numeric characters except comma and dot
             clean_total = re.sub(r"[^\d.,]", "", str(total_str))
-            clean_total = clean_total.replace(",", ".")
+
+            # Handle Indonesian number format where comma is thousands separator
+            # and dot is decimal separator
+            if "," in clean_total and "." in clean_total:
+                # Both comma and dot present - comma is thousands, dot is decimal
+                clean_total = clean_total.replace(",", "")
+            elif "," in clean_total and "." not in clean_total:
+                # Only comma present - it's thousands separator in Indonesian format
+                clean_total = clean_total.replace(",", "")
+            # If only dot present, keep it as decimal separator
+
             return float(clean_total)
         except (ValueError, TypeError):
             pass
@@ -260,7 +270,13 @@ def extract_total_amount(result: Dict) -> float:
     if subtotal_str:
         try:
             clean_subtotal = re.sub(r"[^\d.,]", "", str(subtotal_str))
-            clean_subtotal = clean_subtotal.replace(",", ".")
+
+            # Handle Indonesian number format
+            if "," in clean_subtotal and "." in clean_subtotal:
+                clean_subtotal = clean_subtotal.replace(",", "")
+            elif "," in clean_subtotal and "." not in clean_subtotal:
+                clean_subtotal = clean_subtotal.replace(",", "")
+
             return float(clean_subtotal)
         except (ValueError, TypeError):
             pass
@@ -272,7 +288,13 @@ def extract_total_amount(result: Dict) -> float:
         if "price" in item:
             try:
                 price_str = re.sub(r"[^\d.,]", "", str(item["price"]))
-                price_str = price_str.replace(",", ".")
+
+                # Handle Indonesian number format
+                if "," in price_str and "." in price_str:
+                    price_str = price_str.replace(",", "")
+                elif "," in price_str and "." not in price_str:
+                    price_str = price_str.replace(",", "")
+
                 total += float(price_str)
             except (ValueError, TypeError):
                 continue
