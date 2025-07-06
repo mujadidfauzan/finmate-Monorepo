@@ -16,6 +16,7 @@ import AddSavingsPlanScreen from '../screens/AddSavingsPlanScreen';
 import AddBudgetCategoryScreen from '../screens/AddBudgetCategoryScreen';
 import EditBudgetCategoryScreen from '../screens/EditBudgetCategoryScreen';
 import AllocateSavingsScreen from '../screens/AllocateSavingsScreen';
+import TransactionsScreen from '../screens/TransactionsScreen';
 
 const Stack = createStackNavigator();
 
@@ -53,6 +54,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AddBudgetCategory" component={AddBudgetCategoryScreen} />
         <Stack.Screen name="EditBudgetCategory" component={EditBudgetCategoryScreen} />
         <Stack.Screen name="AllocateSavings" component={AllocateSavingsScreen} />
+        <Stack.Screen name="Transactions" component={TransactionsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

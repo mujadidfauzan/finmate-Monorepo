@@ -13,7 +13,7 @@ class TransactionCreate(BaseModel):
     category: str
     method: str = Field(..., pattern="^(manual|voice|ocr|system)$")
     note: Optional[str]
-    transaction_date: date
+    transaction_date: datetime = Field(default_factory=datetime.now)
 
 
 class TransactionUpdate(BaseModel):
@@ -22,7 +22,7 @@ class TransactionUpdate(BaseModel):
     category: Optional[str]
     method: Optional[str] = Field(None, pattern="^(manual|voice|ocr|system)$")
     note: Optional[str]
-    transaction_date: Optional[date]
+    transaction_date: Optional[datetime]
 
 
 class TokenResponse(BaseModel):

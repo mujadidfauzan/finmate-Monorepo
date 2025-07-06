@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import ReportsScreen from '../screens/ReportsScreen';
-import TransactionsScreen from '../screens/TransactionsScreen';
 import ChatbotScreen from '../screens/ChatbotScreen';
 import BudgetScreen from '../screens/BudgetScreen';
 import COLORS from '../styles/colors';
@@ -118,7 +117,7 @@ const MainTabNavigator = () => {
           ),
         })}
       />
-      <Tab.Screen name="Transactions" component={BudgetScreen} options={{
+      <Tab.Screen name="Budget" component={BudgetScreen} options={{
           tabBarIcon: ({focused}) => (
             <View style={{alignItems: 'center', justifyContent: 'center'}}>
                 <Ionicons name="list" size={24} color={focused ? COLORS.secondary : COLORS.gray} />

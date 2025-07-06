@@ -45,7 +45,7 @@ async def get_transactions(
     if end_date:
         filters += f"&transaction_date=lte.{end_date}"
 
-    data = await fetch_data("transactions", filters)
+    data = await fetch_data("transactions", filters, order_by="transaction_date.desc")
     return {"data": data}
 
 

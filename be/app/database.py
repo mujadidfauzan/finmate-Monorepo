@@ -27,9 +27,11 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 
 # Fetch data
-async def fetch_data(table: str, filters: str = ""):
+async def fetch_data(table: str, filters: str = "", order_by: str = ""):
     async with httpx.AsyncClient() as client:
         url = f"{SUPABASE_URL}/rest/v1/{table}?select=*" + filters
+        if order_by:
+            url += f"&order={order_by}"
         res = await client.get(url, headers=headers)
         return res.json()
 

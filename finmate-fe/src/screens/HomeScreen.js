@@ -10,7 +10,7 @@ import {
   Button,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
@@ -30,6 +30,7 @@ const DEFAULT_TOKEN = Constants.expoConfig.extra.DEFAULT_TOKEN;
 export default function HomeScreen({ navigation }) {
   const { transactions, loading, error, fetchTransactions } = useTransactions();
   const [user, setUser] = useState(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -122,7 +123,7 @@ export default function HomeScreen({ navigation }) {
   };
   
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom, paddingLeft: insets.left, paddingRight: insets.right }]}>
       <StatusBar style="dark" />
       
       <View style={styles.header}>
@@ -149,7 +150,7 @@ export default function HomeScreen({ navigation }) {
       >
         {renderContent()}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
